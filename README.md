@@ -9,7 +9,7 @@ An interactive research workbench for a reproducible, label-blind EuroSAT study.
 ## What is included
 
 - React/TypeScript research interface with linked patch selection, projections, cluster galleries and experiment comparison.
-- Python/FastAPI backend, bounded live PCA/K-Means jobs, SQLite experiment journal and validated image uploads.
+- Python/FastAPI backend, bounded live PCA and K-Means jobs with optional t-SNE, SQLite experiment history and validated image uploads.
 - Actual recorded EuroSAT experiments, fitted model artifacts and anonymous preview patches for an immediate local demonstration.
 - Full dataset download and study reproduction script, numerical tests, API tests and configuration exports.
 - Report PDF, editable presentation and PDF slides, learning guides and submission packager.
@@ -54,6 +54,12 @@ The full run downloads/verifies the original archive, validates and hashes image
 
 Precomputed reference results are explicitly identified in the interface; they are measurements, not simulated responses. Live experiments fit an independent bounded sample of anonymous study descriptors. Their PCA axes and cluster IDs belong to that run and are not automatically aligned with the reference view.
 
+## Try the live workflows
+
+- In **Patch Analyzer**, upload the two [held-out example patches](examples/README.md) one at a time. Compare the visual group, runner-up centroid gap, ranked reference neighbors and JSON exports.
+- In **Experiment Bench**, select K=3, 95% PCA, seed 42, 200 patches and t-SNE perplexity 30. The backend fits a fresh run and returns matched PCA and t-SNE views. The run has its own cluster numbering.
+- Read the [codebase walkthrough](docs/CODEBASE_GUIDE.md) to trace each request through the frontend, API and numerical modules.
+
 ## Scientific interpretation
 
 - Cluster IDs are discovered groups, not known land-type classes or calibrated probabilities.
@@ -77,7 +83,7 @@ Numerical tests cover feature determinism and important label/transform invarian
 
 `Dockerfile` builds the React interface and serves it through one Python service. `render.yaml` declares a free Render service. Connect the GitHub repository in Render, choose the free plan and deploy the repository's Dockerfile. Health check: `/api/health`. The app needs no external API key or account to explore its scientific data.
 
-The default hosted live-experiment cap is 1,000 patches; local cap is 1,500. Override `TERRALENS_MAX_SAMPLES` within 200–3,000 after benchmarking. Only one numerical experiment and one image-analysis worker run at a time. At most two upload requests are accepted simultaneously. Image uploads are limited to 8 MB and decoded dimensions of 16–4096 pixels. Accepted formats: JPEG, PNG and WebP. A received-byte limit is enforced before multipart parsing, including for chunked requests. Images are not retained after the request; temporary upload buffers are closed.
+The default hosted live-experiment cap is 1,000 patches; local cap is 1,500. Override `TERRALENS_MAX_SAMPLES` within 200–3,000 after benchmarking. Jobs that include a new t-SNE fit are capped at 500 patches or the host cap if lower. Only one numerical experiment and one image-analysis worker run at a time. At most two upload requests are accepted simultaneously. Image uploads are limited to 8 MB and decoded dimensions of 16–4096 pixels. Accepted formats: JPEG, PNG and WebP. A received-byte limit is enforced before multipart parsing, including for chunked requests. Images are not retained after the request; temporary upload buffers are closed.
 
 Free Render instances can sleep and restart; runtime experiment history is temporary. Bundled reference artifacts are part of the deployment and remain available after restart. Export important live runs. Keep the installed local build ready for the presentation. See [Render's current limitations](https://render.com/docs/free).
 
@@ -98,6 +104,7 @@ backend/terralens/   Feature extraction, scientific pipeline, HTTP API, run jour
 frontend/           React research workbench
 scripts/            Setup, launch, study reproduction, documents and packaging
 artifacts/          Recorded study, frozen model and anonymous previews
+examples/           Two held-out EuroSAT uploads for the demo
 tests/              Scientific and API checks
 docs/               Methodology, architecture, walkthrough, viva and verification
 output/             Generated report, presentation and submission archive

@@ -66,15 +66,15 @@ Use these to practise speaking, then demonstrate the answer in the application o
 
 32. **What if external agreement is low?** Then these descriptors and this clustering objective have not recovered the annotated categories well. We discuss the visual structure actually found and propose justified extensions rather than relabeling the result as success.
 
-33. **How do you assign an uploaded image?** The saved feature extractor, imputer, scaler and PCA transform the patch. Saved K-Means assigns the nearest reference centroid. There is no retraining on the upload.
+33. **How do you assign an uploaded image?** The saved feature extractor, imputer, scaler and PCA transform the patch. Saved K-Means assigns the nearest reference centroid. The backend compares the next closest centroid and ranks candidate reference patches by Euclidean distance across the retained PCA components.
 
 34. **Is the distance percentile a confidence score?** No. It compares distance with empirical reference distances inside the assigned group. It is not calibrated probability and does not prove the image belongs to the dataset distribution.
 
 35. **Why no t-SNE point for uploads?** The scikit-learn t-SNE implementation does not provide a saved transform for arbitrary new points. Faking a coordinate would misrepresent the method; we show PCA coordinates instead.
 
-36. **What does the backend do?** FastAPI validates requests, serves recorded study data and images, performs bounded experiments, applies the saved model to uploads, and exports consistent numerical evidence. SQLite records experiment jobs.
+36. **What does the backend do?** FastAPI validates uploads and experiment settings. Its inference route reuses the frozen model. Its experiment route queues a separate fit with optional t-SNE, records the result in SQLite and provides a JSON export.
 
-37. **What does the frontend do?** React displays six connected views, lets users inspect the same patch across projections, compare settings, inspect groups, run bounded experiments and analyse uploads. The numerical source is the API, not hardcoded display statistics.
+37. **What does the frontend do?** React displays six connected views, lets users inspect the same patch across projections, compare settings, inspect groups, fit bounded experiments and analyse uploaded patches. It renders the API response and exports the measured results.
 
 38. **How do you reproduce the work?** Install the pinned dependencies, download and verify the documented dataset, run the study script with the recorded settings, then regenerate the application artifacts and documents. Seeds, versions, checksum and selection rule are recorded. Exact timings depend on hardware.
 

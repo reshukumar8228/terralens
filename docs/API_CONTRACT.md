@@ -24,16 +24,18 @@ Returns `{project, dataset, preprocessing, split, quality, feature_names, featur
 - `GET /patches/{id}.jpg` -> anonymous JPEG, or 404.
 - `GET /audit` -> separate frozen study audit JSON (reference labels used only after fitting/selection).
 - `GET /features` -> `{features:[{name,family,description}], ...}`.
-- `POST /experiments` body `{k:2..15,variance:0.9|0.95|0.99,seed:0..9999,sample_size:200..3000}` -> `{id,status}`. Backend may cap hosted samples, explicitly advertise in `/capabilities`.
-- `GET /experiments/{id}` -> `{id,status:queued|running|completed|failed,stage,config,result?:{...run,points:[{id,pca,cluster}],...},error?:string}`. This is a live bounded K-Means-on-PCA experiment. No live t-SNE rerun required on free host; preset t-SNE studies are genuine saved runs.
+- `POST /experiments` body `{k:2..15,variance:0.9|0.95|0.99,seed:0..9999,sample_size:200..3000,tsne_perplexity:10|30|50|null}` -> `{id,status}`. Backend may cap hosted samples, explicitly advertise in `/capabilities`.
+- `GET /experiments/{id}` -> `{id,status:queued|running|completed|failed,stage,config,result?:{...run,points:[{id,pca,cluster,tsne?}],tsne?:{perplexity,trustworthiness,runtime_seconds},...},error?:string}`. An optional new t-SNE fit runs on the same retained PCA features and uses the same point IDs and existing K-Means group colours.
 - `GET /experiments` -> `{experiments:[job...]}` newest first.
-- `POST /analyze` multipart `file` -> `{cluster,pca:[x,y],distance,relative_distance,reference_percentile,representatives:string[],features:[{name,value,zscore}],warnings:string[]}`. No class probability or t-SNE coordinate. Saved reference pipeline only.
-- `GET /export/study.json`, `/export/metrics.csv`, `/export/config.json` -> downloadable recorded data.
-- `GET /capabilities` -> `{max_experiment_samples,live_tsne:false,upload_max_bytes,storage,reference_run_id}`.
+- `POST /analyze` multipart `file` -> `{run_id,cluster,cluster_description,pca:[x,y],distance,alternate_cluster,alternate_distance,margin,relative_distance,reference_percentile,representatives:string[],neighbors:[{id,distance}],neighbor_scope,features:[{name,value,zscore}],warnings:string[]}`. No class probability or t-SNE coordinate. Distances and neighbors use the full retained PCA space. Neighbors are ranked within the assigned group of the bundled preview cohort. The browser can export this response as JSON without the input image.
+- `GET /export/study.json`, `/export/metrics.csv`, `/export/config.json` -> downloadable recorded data. `GET /export/experiments/{id}.json` downloads a runtime job record.
+- `GET /capabilities` -> `{max_experiment_samples,live_tsne:true,max_live_tsne_samples,upload_max_bytes,storage,reference_run_id}`.
 
 FastAPI serves `/` and built frontend assets if `frontend/dist` exists. Vite dev proxies `/api` to `http://127.0.0.1:8000`. Frontend reads only this contract and must not fabricate fallback numbers if data unavailable.
 
 ## ML Python integration
 `backend/terralens/features.py`: `extract_features(PIL.Image)->np.ndarray`, `FEATURE_NAMES`, feature dictionary.
-`backend/terralens/pipeline.py`: `analyze_image(image, artifacts_dir:Path)->dict`, `run_experiment(config:dict, artifacts_dir:Path)->dict`. These load saved artifact state and must not refit on upload. `run_experiment` may use the bundled compact study feature matrix.
+`backend/terralens/inference.py`: `analyze_image(image, artifacts_dir)->dict` applies saved transforms and ranks reference patches.
+
+`backend/terralens/experiments.py`: `run_experiment(config, artifacts_dir)->dict` fits independently on the compact study feature matrix. The route modules in `backend/terralens/api/` handle the HTTP contract.
 `scripts/prepare_study.py`: runnable full download/study command, configurable performance bounds; stores compact inference artifacts and reference JSON in `artifacts/`.

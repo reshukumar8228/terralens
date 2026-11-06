@@ -4,8 +4,8 @@ The three roles below match the member order in `team.json`. Read the [learning 
 
 | Member | Assigned responsibility | Hands-on work to complete | Presentation handoff |
 | --- | --- | --- | --- |
-| 1 | Data and ML reproducibility | Run the science tests. Trace image descriptors, scaling and PCA through `features.py`, `study.py` and `pipeline.py`. Use the Projection Lab to explain one feature loading, the retained-variance curve and a t-SNE parameter change. | Open the talk with the problem, dataset and preprocessing. |
-| 2 | Application verification and demonstration | Start a local copy. Trace a live experiment from `frontend/src/Experiments.tsx` through the routes in `backend/terralens/app.py` to its SQLite record. Test the Patch Analyzer with one EuroSAT image and an invalid file. Record what the API returned. | Explain the React and FastAPI workflow and operate the demo. |
+| 1 | Data and ML reproducibility | Run the science tests. Trace image descriptors, scaling and PCA through `features.py`, `study.py` and `inference.py`. Use the Projection Lab to explain one feature loading, the retained-variance curve and a t-SNE parameter change. | Open the talk with the problem, dataset and preprocessing. |
+| 2 | Application verification and demonstration | Start a local copy. Trace a live experiment from `frontend/src/Experiments.tsx` through `backend/terralens/api/experiments.py` to its SQLite record. Fit a t-SNE view and test the Patch Analyzer with both held-out examples and an invalid file. Record what the API returned. | Explain the React and FastAPI workflow and operate the demo. |
 | 3 | Results interpretation and documentation | Match the report's figures to `artifacts/study.json` and `artifacts/audit.json`. Compare K=2 and K=10 in the atlas. Reconcile PCA-space silhouette with common-space silhouette and check both submitted URLs. | Present the results, limitations and audit, then close with the team's completed work. |
 
 ## One practice session

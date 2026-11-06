@@ -1,10 +1,9 @@
 {
-  "automated_tests": "24 passed, zero failures. Tests covered scientific invariants, API contracts, experiment execution, and upload limits.",
-  "frontend_build": "TypeScript check and Vite production build completed successfully.",
-  "browser_workflows": "Verified projection settings, saved K=10 atlas context, live K=3 experiment and history restore, a real RGB file upload, keyboard navigation, and separate label audit.",
-  "responsive_layout": "All six workspaces checked at 320, 375, 414 and 768 pixels. No page-level horizontal overflow in any of the 24 checks.",
-  "reference_artifacts": "27,000 EuroSAT patches processed. Reference model, anonymous split, six t-SNE runs, label audit and 3,160 previews verified.",
-  "source_release": "GitHub main received application commit 79e557a. Personalised metadata and documents remain in the local submission package.",
-  "clean_install": "Installed from a clean Git archive, built the frontend and passed all 24 tests. GitHub Actions also passed for the application commit.",
-  "deployed_application": "Render Free, Singapore. Verified public homepage, study, configuration export, thumbnails and label audit. Uploaded a real EuroSAT patch and completed a new K=3 experiment."
+  "automated_tests": "26 passed. Covered numerical invariants, input validation, saved-model analysis, ranked neighbors, and live PCA, K-Means and t-SNE.",
+  "frontend_build": "TypeScript and Vite production build passed. GitHub Actions passed for the 1.1 runtime release.",
+  "browser_workflows": "Two real file uploads, separate category mix, JSON export, a fresh experiment, and restoration of the completed hosted run.",
+  "responsive_layout": "Updated analyzer and experiment views fit 375 px without page overflow. All six original workspaces were previously checked at four widths.",
+  "reference_artifacts": "27,000 EuroSAT RGB patches, frozen reference model, anonymous split, six recorded t-SNE layouts and separate audit preserved.",
+  "hosted_uploads": "Two held-out EuroSAT patches reached Groups 01 and 02. Each returned eight distinct ranked reference neighbors, with centroid gaps of 7.216 and 7.900.",
+  "hosted_live_run": "K=3, 200 patches, 95% PCA target, seed 42, perplexity 30. 22 PCs retained 95.34%; trustworthiness 0.9408; total runtime 7.90 s. Export matched the job result."
 }

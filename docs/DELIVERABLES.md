@@ -3,7 +3,8 @@
 - `output/pdf/TerraLens_Project_Report.pdf`: detailed report generated from the measured study, separate audit, team metadata and actual application screenshots.
 - `output/presentation/TerraLens_Presentation.pptx`: editable 16-slide deck. Slides 1-12 support the confirmed 3-5 minute main presentation; slides 13-16 are technical appendices for questions. Speaker notes contain talking points and source links.
 - `output/presentation/TerraLens_Presentation.pdf`: stable presentation copy using faithful 2560x1440 authoring renders. Use this for consistent display on the presentation computer.
-- `docs/LEARNING_GUIDE.md`: the complete conceptual and code walkthrough.
+- `docs/LEARNING_GUIDE.md`: the concepts and measured results.
+- `docs/CODEBASE_GUIDE.md`: an end-to-end trace through the source code.
 - `docs/VIVA_40.md`: forty viva questions and defensible answers.
 - `docs/DEMO_WALKTHROUGH.md`: a four-minute talk and a separate live demonstration.
 - `docs/ARCHITECTURE.md`: system boundary, workflow diagrams, API, storage and security details.

@@ -105,11 +105,11 @@ Download the documented archive, verify its checksum, decode images, extract des
 
 ### Run a live experiment
 
-Choose a bounded sample size, K, variance target and seed in Experiment Bench. The backend uses anonymous descriptors from the compact study cohort, fits an independent scaler/PCA/K-Means experiment and saves its result. Its axes and cluster IDs belong to that run. It does not modify the reference study or reveal category labels. On a free host, experiment storage can be temporary.
+Choose a bounded sample size, K, variance target and seed in Experiment Bench. The backend uses anonymous descriptors from the compact study cohort, fits an independent scaler/PCA/K-Means experiment and saves its result. Its axes and cluster IDs belong to that run. Optionally fit a new t-SNE view on the same retained PCA vectors and compare it with the matching PCA scatter. The run keeps the reference study and category audit separate. On a free host, experiment storage can be temporary.
 
 ### Analyse a new patch
 
-The API validates and decodes the image, extracts the same 78 descriptors, then calls the saved imputer, scaler, PCA and K-Means in that order. It returns the assigned cluster, PCA coordinate, distance and representative reference patches. A reference-distance percentile describes how far the input is from its centroid compared with that group's reference distances. It is not a calibrated probability, certainty score, or validated out-of-distribution detector.
+The API validates and decodes the image, extracts the same 78 descriptors, then calls the saved imputer, scaler, PCA and K-Means in that order. It returns the assigned cluster, PCA coordinate, the closest two centroid distances, and up to eight ranked neighbors in the assigned group of the anonymous preview cohort. The PCA chart shows two components while the ranking uses all retained components. A reference-distance percentile describes how far the input is from its centroid compared with that group's reference distances. It is not a calibrated probability, certainty score, or validated out-of-distribution detector.
 
 ## 10. Trace the code
 
@@ -117,15 +117,18 @@ The API validates and decodes the image, extracts the same 78 descriptors, then 
 |---|---|
 | `scripts/prepare_study.py` | Full dataset preparation, experiment construction and recorded study generation |
 | `backend/terralens/features.py` | The complete descriptor dictionary and image-to-vector function |
-| `backend/terralens/pipeline.py` | Saved-model inference, cluster summaries, internal metrics and bounded experiments |
-| `backend/terralens/app.py` | HTTP validation, routes, jobs, uploads, exports and frontend serving |
+| `backend/terralens/inference.py` | Saved-model upload transforms, centroid diagnostics and retrieval |
+| `backend/terralens/experiments.py` | Live PCA, K-Means and optional t-SNE |
+| `backend/terralens/clustering.py` | Shared cluster summaries and internal metrics |
+| `backend/terralens/api/` | HTTP routes for study evidence, uploads and experiment jobs |
+| `backend/terralens/app.py` | FastAPI setup, request limits and frontend serving |
 | `artifacts/study.json` | Actual reference settings, metrics, visual cohort and provenance |
 | `artifacts/audit.json` | Separate post-selection label audit |
 | `frontend/src` | The six application views and linked charts |
 | `scripts/build_deliverables.py` | Rebuilds the report and evidence figures from recorded results |
 | `scripts/build_presentation.mjs` | Rebuilds the editable slide deck from the same results |
 
-Use the source tree and search if a filename changes. An API route is an interface for one task; it is not the algorithm itself.
+The [codebase guide](CODEBASE_GUIDE.md) traces the requests, model artifacts and SQLite job records across these files.
 
 ## 11. Limitations you should volunteer
 

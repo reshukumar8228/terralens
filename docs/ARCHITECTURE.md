@@ -54,15 +54,16 @@ The definitive typed payload contract is `API_CONTRACT.md`. The base path is `/a
 | `GET /patches/{id}.jpg` | Return a validated anonymous preview image |
 | `GET /audit` | Open the separate post-selection reference-label audit |
 | `GET /capabilities` | Advertise actual host limits and storage behaviour |
-| `POST /experiments` | Submit bounded K, variance, seed and sample-size settings |
+| `POST /experiments` | Submit bounded K, variance, seed, sample size and optional t-SNE perplexity |
 | `GET /experiments` | List recent experiment jobs |
 | `GET /experiments/{id}` | Poll status, stage, result or failure |
 | `POST /analyze` | Validate an image and apply the saved reference pipeline |
 | `GET /export/study.json` | Download the study record |
 | `GET /export/metrics.csv` | Download recorded numerical metrics |
 | `GET /export/config.json` | Download reproducibility settings |
+| `GET /export/experiments/{id}.json` | Download a live job record |
 
-A live experiment accepts K from 2 to 15, PCA retention of 0.90, 0.95 or 0.99, seed from 0 to 9999, and 200 to 3,000 samples subject to the host's advertised cap. Validation failures should return a clear client error. Failed jobs preserve an error state so the interface can explain what happened. Only one bounded job runs at a time to control memory and CPU use.
+A live experiment accepts K from 2 to 15, PCA retention of 0.90, 0.95 or 0.99, seed from 0 to 9999, and 200 to 3,000 samples subject to the host's advertised cap. Optional t-SNE accepts perplexity 10, 30 or 50 and caps the cohort at 500 or the host limit if lower. Both plots share the same sampled patch IDs. Validation failures should return a clear client error. Failed jobs preserve an error state so the interface can explain what happened. Only one bounded job runs at a time to control memory and CPU use.
 
 ## Upload sequence
 
@@ -76,13 +77,13 @@ sequenceDiagram
   R->>A: POST /api/analyze (multipart file)
   A->>A: Check size, format and decoding
   A->>P: Extract descriptors and transform
-  P->>P: Assign nearest saved centroid
-  P-->>A: Group, PCA coordinates, distance and features
+  P->>P: Assign nearest centroid and rank neighbors
+  P-->>A: Group, runner-up, PCA coordinates and evidence
   A-->>R: JSON with interpretation warnings
-  R-->>U: Patch analysis and reference examples
+  R-->>U: Patch analysis and downloadable result
 ```
 
-The scaler and PCA are not refitted on the upload. Distance percentile is an empirical comparison with within-group reference distances, not probability. scikit-learn t-SNE is a fitted visualisation of the saved cohort and is not used to place uploads.
+The scaler and PCA are not refitted on the upload. Distance percentile is an empirical comparison with within-group reference distances, not probability. The upload has a reusable PCA coordinate. Both the recorded and live t-SNE views are fitted on cohorts with fixed membership for the particular run.
 
 ## Persistence and deployment
 

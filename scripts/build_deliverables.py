@@ -386,7 +386,7 @@ def build_report(study, selected, audit, team, links, figures):
         heading("What the table can establish"),
         para("It records actual runtime and neighbourhood-preservation measurements for the stated configuration. A higher trustworthiness value supports better local preservation under that metric and reference space. It does not establish a globally correct map or an optimal semantic partition."),
         heading("What the application does"),
-        para("Projection Lab switches among these genuine recorded views. It does not imply that the free host recomputes t-SNE interactively. The backend advertises live t-SNE capability as false. New uploads appear only in PCA coordinates, avoiding invented t-SNE placement."),
+        para("Projection Lab switches among the recorded views. Experiment Bench can independently fit a fresh t-SNE projection for up to 500 anonymous study patches and display both views for the same patch IDs. Uploads use the saved PCA transform."),
         heading("Parameter effects"),
         para("Perplexity changes the neighbourhood scale used in the similarity construction. Initialisation, random seed and optimisation also influence the layout. The appropriate conclusion is conditional: this setting produces this view of these descriptors on this cohort. [4]"),
     )
@@ -451,9 +451,9 @@ def build_report(study, selected, audit, team, links, figures):
         WorkflowDiagram(), Spacer(1, 10),
         table([["Component", "Responsibility"], ["Offline study", "Validate archive, describe images, compare settings and freeze selection"], ["Reference artifacts", "Fitted transforms, centroids, measured JSON and anonymous previews"], ["Online application", "Inspect evidence, run independent bounded jobs and analyse uploads"]], [115, 372]),
         heading("Upload workflow"),
-        para("Upload validation -> RGB conversion and fixed resize -> 78 descriptors -> saved imputer -> saved standardiser -> saved PCA -> nearest saved K-Means centroid -> JSON result and representative images. Neither preprocessing nor the model is retrained on the upload."),
+        para("Upload validation -> RGB conversion and fixed resize -> 78 descriptors -> saved imputer -> saved standardiser -> saved PCA -> nearest saved K-Means centroid -> the result, runner-up gap and ranked neighbours from the assigned group of the bundled reference cohort. The upload uses the frozen transforms and centres."),
         heading("Runtime experiments"),
-        para("A separate bounded experiment fits its own preprocessing, PCA and K-Means on an anonymous compact study sample. Its coordinate axes and cluster IDs are run-specific. It does not overwrite the reference model. The API serialises jobs to control resources."),
+        para("A separate bounded experiment fits its own preprocessing, PCA and K-Means on an anonymous compact study sample. Optional t-SNE uses the same retained PCA cohort. Each live run has its own coordinates and group IDs. The API serialises jobs to control resources and keeps the reference model immutable."),
         heading("Tools and technologies"),
         para("Python, NumPy, SciPy, Pillow, scikit-image and scikit-learn implement the numerical study. FastAPI serves the application API. React, TypeScript and Vite implement the interface. SQLite and local JSON store experiment metadata/results. ReportLab and an editable presentation tool generate the academic artifacts from the same study record."),
     )
@@ -469,8 +469,8 @@ def build_report(study, selected, audit, team, links, figures):
     shots = [
         ("observatory", "Application: Observatory", "The overview connects genuine patch imagery with the selected reference study, dataset audit and numerical evidence."),
         ("projection-lab", "Application: Projection Lab", "Linked patch identity supports comparison of PCA and saved t-SNE views on the same visual cohort. Parameter settings and interpretation cautions are visible."),
-        ("patch-analyzer", "Application: Patch Analyzer", "A validated image upload uses the saved reference pipeline. PCA coordinates and distance diagnostics are shown without claiming class probability or fabricated t-SNE coordinates."),
-        ("experiment-bench", "Application: Experiment Bench", "The completed live run shows how to inspect results and export its record. The comparison table computes silhouette on the same evaluation sample in the common standardised feature space."),
+        ("patch-analyzer", "Application: Patch Analyzer", "A validated upload uses the saved reference pipeline. The result shows both centroid distances, their gap, ranked reference patches and a PCA location. The JSON export captures the result and its interpretation warnings."),
+        ("experiment-bench", "Application: Experiment Bench", "This live 200-patch run fits K=3 with 95% PCA and t-SNE perplexity 30. Both plots share patch IDs and K-Means colours. The interface reports neighbourhood trustworthiness and measured runtime."),
         ("reference-audit", "Application: Reference Audit", "The separate audit compares the frozen groups with the EuroSAT categories. Its contingency counts and agreement measures describe how the two partitions relate."),
     ]
     shot_count = 0
@@ -488,7 +488,7 @@ def build_report(study, selected, audit, team, links, figures):
         heading("Measured reference timings"),
         para(f"The selected clustering run took {fmt(selected.get('runtime_seconds'), 2)} seconds. See the t-SNE sensitivity table for projection timings. Runtime varies with sample size, CPU and host load."),
         heading("Resource bounds"),
-        para("The API runs one experiment at a time on a bounded sample. Compact descriptors support experiments without the raw archive. Stored t-SNE runs support interactive comparison on a small host."),
+        para("The API runs one experiment at a time on a bounded sample. Compact descriptors support experiments without the raw archive. The fresh t-SNE option caps the cohort at 500 patches. Recorded projections keep the larger comparison immediately available."),
     )
     add_page("Limitations, impact and future scope",
         heading("Scientific limitations"),

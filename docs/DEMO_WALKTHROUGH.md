@@ -6,7 +6,7 @@ Rehearse a **3-5 minute slide presentation**, with separate time for the live de
 
 - Run the application locally and verify every view. Keep a local copy even if live hosting works.
 - Open the report, presentation and `artifacts/study.json`. Confirm the numbers match the current application.
-- Use a genuine included satellite patch for upload. Also prepare a text file to show rejection if asked.
+- Have both [held-out satellite patches](../examples/README.md) ready to upload. Also prepare a text file to show rejection if asked.
 - Check the selected run, explained-variance threshold, descriptor count and audit result. Each member should know these values.
 - Verify the names, registration numbers and links. Record actual individual contributions in `team.json` before regenerating the final documents.
 - Rehearse without internet. Raw dataset download is needed for full study reproduction, not for using the compact reference demonstration.
@@ -34,7 +34,7 @@ Show the real dataset counts and selected-run metrics. Open a representative pat
 
 ### Projection Lab
 
-Select a patch and compare its identity in the PCA and t-SNE views. Change a saved t-SNE parameter setting. Say: “These are recorded genuine runs on the same cohort; the spatial arrangement is sensitive to the setting.” Do not claim live t-SNE fitting if the host exposes saved views only.
+Select a patch and compare its identity in the PCA and t-SNE views. Change a saved t-SNE parameter setting. Say “Each recorded projection uses the same patch IDs. Changing the settings can change where the points appear.” The Experiment Bench is where you can fit a new projection.
 
 ### Cluster Atlas
 
@@ -42,11 +42,11 @@ Compare a central representative with a boundary patch whose distances to its ne
 
 ### Experiment Bench
 
-Submit one bounded experiment, changing K or the retained-variance target. Explain its sample size and seed. Wait for completion and compare with its own recorded metric space. Independent PCA axes and arbitrary cluster numbers need not line up with the reference run.
+Run K=3 with 95% PCA, seed 42, 200 patches and t-SNE perplexity 30. Show the matching PCA and t-SNE plots, their shared patch IDs, the measured trustworthiness and the runtime. Explain that K-Means used the retained PCA space, and that each live run has its own axes and cluster numbering.
 
 ### Patch Analyzer
 
-Upload a real patch. Trace extraction, saved preprocessing and nearest-centroid assignment. Point out the PCA coordinate and the centroid distance relative to the reference group's median. Explain that distance describes geometric similarity in the retained PCA space.
+Upload `demo-patch-01.jpg`, then `demo-patch-02.jpg`. The expected outputs are Group 01 and Group 02. Trace the 78 descriptors, saved preprocessing and nearest-centroid assignment. Show the runner-up gap and ranked reference patches. The gap is the second-smallest centroid distance minus the smallest one. If asked about land type, open the separate category mix and explain that it describes the frozen group, then export the individual analysis JSON.
 
 ### Study & Evidence
 

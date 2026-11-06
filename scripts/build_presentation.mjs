@@ -171,10 +171,10 @@ await fs.mkdir(BUILD,{recursive:true}); await fs.mkdir(OUT,{recursive:true});
 }
 // 09 - real app evidence
 {
-  const q=slide("Working application",`20 seconds. Name the six views, then save detailed interaction for the separate live demo. Observatory, Projection Lab, Cluster Atlas, Experiment Bench, Patch Analyzer and Study & Evidence are connected to real API data. Live experiments are bounded; t-SNE comparisons are precomputed genuine runs. The source includes recorded results, uploads and export routes. Screenshot is captured from the working application when available.`);
-  const available=await img(q,path.join(ROOT,"docs/screenshots/observatory.png"),64,150,885,455)||await img(q,path.join(ROOT,"docs/screenshots/observatory.jpg"),64,150,885,455);
+  const q=slide("Working application",`20 seconds. Name the six views, then save detailed interaction for the separate live demo. Observatory, Projection Lab, Cluster Atlas, Experiment Bench, Patch Analyzer and Study & Evidence are connected to real API data. Projection Lab shows saved results. Experiment Bench can fit PCA, K-Means and t-SNE on one bounded cohort. In Patch Analyzer, two held-out examples reach different groups and show centroid diagnostics and ranked reference patches. The screenshot shows the running analyzer.`);
+  const available=await img(q,path.join(ROOT,"docs/screenshots/patch-analyzer.png"),64,150,885,455)||await img(q,path.join(ROOT,"docs/screenshots/patch-analyzer.jpg"),64,150,885,455);
   if(!available)lines(q,["Observatory and Projection Lab","Cluster Atlas and Experiment Bench","Patch Analyzer and Study & Evidence"],64,185,850,32,115);
-  tx(q,"Inspect patches\nCompare parameters\nRun experiments\nAnalyse an upload\nExport evidence",990,175,235,350,25,{bold:true});
+  tx(q,"Inspect patches\nCompare parameters\nFit a fresh t-SNE\nAnalyse an upload\nExport evidence",990,175,235,350,25,{bold:true});
   tx(q,"Live demonstration follows the timed presentation",64,624,1152,30,23,{color:MUTED});
 }
 // 10 - tools/architecture/security

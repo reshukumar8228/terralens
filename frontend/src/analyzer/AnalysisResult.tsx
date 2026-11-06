@@ -81,10 +81,11 @@ function NearestPatches({ result, onSelect }: { result: Analysis; onSelect: (id:
 }
 
 export default function AnalysisResult({
-  result, run, analyzing, selectPatch,
+  result, run, isReference, analyzing, selectPatch,
 }: {
   result: Analysis | null;
   run: Run;
+  isReference: boolean;
   analyzing: boolean;
   selectPatch: (id: string) => void;
 }) {
@@ -110,7 +111,7 @@ export default function AnalysisResult({
   return (
     <Panel
       title="Analysis result"
-      detail="Assignment using the saved reference run."
+      detail={`${isReference ? 'Reference model' : 'Finer comparison'} · ${run.k} visual groups`}
       className="analyzer-result"
       action={
         <button
@@ -136,7 +137,7 @@ export default function AnalysisResult({
       </div>
       <CentroidEvidence result={result}/>
       <NearestPatches result={result} onSelect={selectPatch}/>
-      <CategoryMix cluster={result.cluster} runId={result.run_id || run.id}/>
+      <CategoryMix cluster={result.cluster} runId={run.id} isReference={isReference}/>
       {result.warnings.map((warning, index) => <Notice warning key={index}>{warning}</Notice>)}
     </Panel>
   );

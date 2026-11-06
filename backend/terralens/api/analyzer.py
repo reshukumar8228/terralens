@@ -15,9 +15,9 @@ log = logging.getLogger(__name__)
 
 
 @router.post("/analyze")
-async def analyze(request: Request, resources: Resources, file: Annotated[UploadFile, File()]):
+async def analyze(request: Request, resources: Resources, file: Annotated[UploadFile, File()], run_id: str | None = None):
     try:
-        resources.require_artifact("study.json")
+        comparison = resources.uses_comparison(run_id)
         resources.limits.check(request, "upload", 12)
         raw = await file.read(MAX_UPLOAD + 1)
     finally:
@@ -28,7 +28,7 @@ async def analyze(request: Request, resources: Resources, file: Annotated[Upload
         raise HTTPException(413, "The image must be smaller than 8 MB.")
     try:
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(resources.upload_worker, analyze_upload, raw, resources.artifacts)
+        return await loop.run_in_executor(resources.upload_worker, analyze_upload, raw, resources.artifacts, comparison)
     except HTTPException:
         raise
     except FileNotFoundError:

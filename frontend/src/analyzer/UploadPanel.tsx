@@ -11,6 +11,9 @@ interface UploadPanelProps {
   analyzing: boolean;
   loadingExample: boolean;
   error: string;
+  modes: { id: string; label: string }[];
+  selectedMode: string;
+  onModeChange: (id: string) => void;
   onChoose: (file: File) => void;
   onClear: () => void;
   onAnalyze: () => void;
@@ -19,7 +22,7 @@ interface UploadPanelProps {
 
 export default function UploadPanel({
   file, maxBytes, analyzing, loadingExample, error,
-  onChoose, onClear, onAnalyze, onExample,
+  modes, selectedMode, onModeChange, onChoose, onClear, onAnalyze, onExample,
 }: UploadPanelProps) {
   const input = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState('');
@@ -121,6 +124,18 @@ export default function UploadPanel({
           >
             {loadingExample ? 'Loading example…' : 'Try a EuroSAT example'} <ArrowRight size={15}/>
           </button>
+        )}
+        {modes.length > 1 && (
+          <div className="control-field analysis-mode">
+            <label htmlFor="analysis-grouping">Visual grouping</label>
+            <select id="analysis-grouping" value={selectedMode} disabled={busy}
+              aria-describedby="analysis-grouping-detail" onChange={event => onModeChange(event.target.value)}>
+              {modes.map(mode => <option key={mode.id} value={mode.id}>{mode.label}</option>)}
+            </select>
+            <p id="analysis-grouping-detail" className="caption">
+              Both models group patches by colour and texture with land-type labels hidden.
+            </p>
+          </div>
         )}
         <button className="button button-primary run-button" type="submit" disabled={!file || busy}>
           {analyzing ? <span className="loading-dots"/> : <Crosshair size={18}/>}

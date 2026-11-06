@@ -11,6 +11,7 @@ import numpy as np
 from PIL import Image
 
 from .features import FEATURE_NAMES, extract_features
+from .settings import COMPARISON_MODEL_FILENAME, COMPARISON_RUN_ID
 
 NEIGHBOR_COUNT = 8
 
@@ -70,7 +71,8 @@ def _load_neighbor_groups(
     model_version: ArtifactVersion,
     compact_version: ArtifactVersion,
     study_version: ArtifactVersion,
-) -> dict[int, NeighborGroup]:
+    comparison: bool,
+) -> tuple[dict[int, NeighborGroup], np.ndarray]:
     """Read and verify the cohort once per version of the three bundled artifacts."""
     model = _load_model(model_version)
     study = json.loads(study_version.path.read_text(encoding="utf-8"))
@@ -80,8 +82,13 @@ def _load_neighbor_groups(
         raw = bundle["X"]
         ids = bundle["ids"]
     points = study["points"]
+    expected_id = COMPARISON_RUN_ID if comparison else study["selected_run_id"]
+    run = next((run for run in study["runs"] if run["id"] == expected_id), None)
     if (
-        model["reference_run_id"] != study["selected_run_id"]
+        run is None
+        or model["reference_run_id"] != expected_id
+        or model["components"] != run["components"]
+        or model["kmeans"].cluster_centers_.shape != (run["k"], run["components"])
         or model["archive_sha256"] != study["dataset"]["archive_sha256"]
         or model["feature_names"] != FEATURE_NAMES
         or ids.tolist() != [point["id"] for point in points]
@@ -92,8 +99,8 @@ def _load_neighbor_groups(
     standardized, coordinates = _project(model, raw)
     clusters = model["kmeans"].predict(coordinates)
     if (
-        clusters.tolist() != [point["cluster"] for point in points]
-        or not np.allclose(coordinates[:, :2], [point["pca"] for point in points], atol=1e-8, rtol=1e-8)
+        not np.allclose(coordinates[:, :2], [point["pca"] for point in points], atol=1e-8, rtol=1e-8)
+        or (not comparison and clusters.tolist() != [point["cluster"] for point in points])
     ):
         raise ValueError("Frozen model and preview coordinates disagree")
 
@@ -105,17 +112,19 @@ def _load_neighbor_groups(
             coordinates[positions],
             _describe_group(raw[positions], standardized[positions]),
         )
-    return groups
+    return groups, clusters
 
 
-def analyze_image(image: Image.Image, artifacts_dir: Path) -> dict:
+def analyze_image(image: Image.Image, artifacts_dir: Path, *, comparison: bool = False) -> dict:
     artifacts_dir = Path(artifacts_dir)
-    model_version = ArtifactVersion.read(artifacts_dir / "model.joblib")
+    model_filename = COMPARISON_MODEL_FILENAME if comparison else "model.joblib"
+    model_version = ArtifactVersion.read(artifacts_dir / model_filename)
     model = _load_model(model_version)
-    groups = _load_neighbor_groups(
+    groups, cohort_clusters = _load_neighbor_groups(
         model_version,
         ArtifactVersion.read(artifacts_dir / "compact_features.npz"),
         ArtifactVersion.read(artifacts_dir / "study.json"),
+        comparison,
     )
 
     raw = extract_features(image)[None, :]
@@ -148,7 +157,7 @@ def analyze_image(image: Image.Image, artifacts_dir: Path) -> dict:
     if percentile >= 95:
         warnings.append("This patch is unusually far from its assigned centroid compared with the reference group (at or above the 95th percentile).")
 
-    return {
+    result = {
         "run_id": model["reference_run_id"],
         "cluster": cluster_id,
         "cluster_description": group.description if group is not None else "The bundled preview cohort has no patches from this group.",
@@ -168,3 +177,6 @@ def analyze_image(image: Image.Image, artifacts_dir: Path) -> dict:
         ],
         "warnings": warnings,
     }
+    if comparison:
+        result["cohort_clusters"] = cohort_clusters.tolist()
+    return result

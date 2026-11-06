@@ -1,5 +1,7 @@
 .upload-replace { margin-inline-start: auto; }
 .uploaded-file > span { flex: 1; }
+.analysis-mode { margin-top: var(--space-lg); }
+.analyzer-grid .analysis-mode .caption { margin-top: var(--space-xs); }
 .assignment-heading h3 { font-size: var(--text-xl); }
 .assignment-description { font-size: var(--text-sm); color: var(--color-muted); margin-top: var(--space-xs); }
 .centroid-evidence {

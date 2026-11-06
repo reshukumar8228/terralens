@@ -15,6 +15,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
 
+from terralens.settings import COMPARISON_MODEL_FILENAME, COMPARISON_RUN_ID
 from terralens.store import ExperimentStore
 
 SAFE_ID = re.compile(r"^[a-zA-Z0-9_-]{1,96}$")
@@ -72,6 +73,26 @@ class AppResources:
     @property
     def study_ready(self) -> bool:
         return (self.artifacts / "study.json").is_file()
+
+    def analysis_run_ids(self) -> list[str]:
+        study = self.require_artifact("study.json")
+        selected = study["selected_run_id"]
+        runs = [selected]
+        if (
+            selected != COMPARISON_RUN_ID
+            and (self.artifacts / COMPARISON_MODEL_FILENAME).is_file()
+            and any(run["id"] == COMPARISON_RUN_ID for run in study["runs"])
+        ):
+            runs.append(COMPARISON_RUN_ID)
+        return runs
+
+    def uses_comparison(self, run_id: str | None) -> bool:
+        runs = self.analysis_run_ids()
+        if run_id is None:
+            return False
+        if run_id not in runs:
+            raise HTTPException(404, "This patch analysis run is not available.")
+        return run_id != runs[0]
 
     def require_artifact(self, name: str) -> dict:
         # Only route-defined artifact names reach this method.

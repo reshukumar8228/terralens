@@ -18,7 +18,7 @@ function categoryName(name: string) {
   return name.replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll('_', ' ');
 }
 
-export default function CategoryMix({ cluster, runId }: { cluster: number; runId: string }) {
+export default function CategoryMix({ cluster, runId, isReference }: { cluster: number; runId: string; isReference: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const [group, setGroup] = useState<AuditGroup | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,7 +33,8 @@ export default function CategoryMix({ cluster, runId }: { cluster: number; runId
     setLoading(true);
     setError('');
     try {
-      const audit = await request<Audit>('/audit', { signal: controller.signal });
+      const route = isReference ? '/audit' : `/audit?run_id=${encodeURIComponent(runId)}`;
+      const audit = await request<Audit>(route, { signal: controller.signal });
       if (audit.reference_run_id !== runId) {
         throw new Error('The available reference audit belongs to a different run.');
       }
@@ -83,7 +84,7 @@ export default function CategoryMix({ cluster, runId }: { cluster: number; runId
           <>
             <p className="caption">
               Recorded categories for {format(group.total, 0)} study patches in this group.
-              The study used these labels after fitting to describe group composition.
+              The study counted these labels after fitting. The percentages describe the group as a whole.
             </p>
             <ul className="category-counts">
               {categories.map(([name, count]) => (

@@ -4,14 +4,14 @@ import { Scatter } from './Charts';
 import { FeatureProfile, Notice, PageTitle, Panel } from './UI';
 import AnalysisResult from './analyzer/AnalysisResult';
 import UploadPanel from './analyzer/UploadPanel';
-import type { Analysis, Capabilities, Run, Study } from './types';
+import type { Analysis, Capabilities, PatchContext, Run, Study } from './types';
 import './analyzer/analyzer.css';
 
 interface AnalyzerProps {
   study: Study;
   run: Run;
   capabilities: Capabilities;
-  selectPatch: (id: string) => void;
+  selectPatch: (id: string, context?: PatchContext) => void;
 }
 
 const imageFormats = ['image/jpeg', 'image/png', 'image/webp'];
@@ -19,9 +19,22 @@ const imageFormats = ['image/jpeg', 'image/png', 'image/webp'];
 export default function Analyzer({ study, run, capabilities, selectPatch }: AnalyzerProps) {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<Analysis | null>(null);
+  const [runId, setRunId] = useState(run.id);
   const [activity, setActivity] = useState<'example' | 'analysis' | null>(null);
   const [error, setError] = useState('');
   const activeRequest = useRef<AbortController | null>(null);
+  const analysisRuns = (capabilities.analysis_runs ?? []).flatMap(id => {
+    const savedRun = study.runs.find(item => item.id === id);
+    return savedRun ? [savedRun] : [];
+  });
+  const analysisRun = analysisRuns.find(item => item.id === runId) ?? run;
+  const isReference = analysisRun.id === run.id;
+  const cohortClusters = result?.cohort_clusters;
+  const cohortPoints = isReference
+    ? study.points
+    : cohortClusters?.length === study.points.length
+      ? study.points.map((point, index) => ({ id: point.id, pca: point.pca, cluster: cohortClusters[index] }))
+      : [];
 
   useEffect(() => () => activeRequest.current?.abort(), []);
 
@@ -44,6 +57,17 @@ export default function Analyzer({ study, run, capabilities, selectPatch }: Anal
     }
   }
 
+  function changeRun(id: string) {
+    setRunId(id);
+    setResult(null);
+    setError('');
+  }
+
+  function inspectPatch(id: string) {
+    const point = cohortPoints.find(item => item.id === id);
+    selectPatch(id, { runId: analysisRun.id, clusterId: point?.cluster ?? result?.cluster, point });
+  }
+
   async function analyze() {
     if (!file || activeRequest.current) return;
     const controller = new AbortController();
@@ -55,9 +79,13 @@ export default function Analyzer({ study, run, capabilities, selectPatch }: Anal
     try {
       const body = new FormData();
       body.append('file', file);
-      const analysis = await request<Analysis>('/analyze', {
+      const route = isReference ? '/analyze' : `/analyze?run_id=${encodeURIComponent(analysisRun.id)}`;
+      const analysis = await request<Analysis>(route, {
         method: 'POST', body, signal: controller.signal,
       });
+      if ((analysis.run_id ?? run.id) !== analysisRun.id) {
+        throw new Error('The analysis returned a different grouping. Please try again.');
+      }
       if (!controller.signal.aborted) setResult(analysis);
     } catch (cause) {
       if (!controller.signal.aborted) setError((cause as Error).message);
@@ -107,26 +135,34 @@ export default function Analyzer({ study, run, capabilities, selectPatch }: Anal
           analyzing={activity === 'analysis'}
           loadingExample={activity === 'example'}
           error={error}
+          modes={analysisRuns.map(item => ({
+            id: item.id, label: `${item.id === run.id ? 'Reference' : 'Finer comparison'} · ${item.k} visual groups`,
+          }))}
+          selectedMode={analysisRun.id}
+          onModeChange={changeRun}
           onChoose={chooseImage}
           onClear={clearImage}
           onAnalyze={() => { void analyze(); }}
           onExample={() => { void useExample(); }}
         />
-        <AnalysisResult result={result} run={run} analyzing={activity === 'analysis'} selectPatch={selectPatch}/>
+        <AnalysisResult result={result} run={analysisRun} isReference={isReference}
+          analyzing={activity === 'analysis'} selectPatch={inspectPatch}/>
       </div>
       {result && (
         <div className="analysis-grid">
           <Panel
             title="Your patch in PCA space"
-            detail="The crosshair marks your upload. The dots are reference study patches."
+            detail={`The crosshair marks your upload. The dots use the saved ${analysisRun.k}-group assignment.`}
           >
-            <Scatter
-              points={study.points}
-              projection="pca"
-              marker={result.pca}
-              filter={result.cluster}
-              onSelect={selectPatch}
-            />
+            {cohortPoints.length ? (
+              <Scatter
+                points={cohortPoints}
+                projection="pca"
+                marker={result.pca}
+                filter={result.cluster}
+                onSelect={inspectPatch}
+              />
+            ) : <Notice>The saved cohort assignments are unavailable for this grouping.</Notice>}
           </Panel>
           <Panel title="What the image contains" detail="Feature measurements relative to the study distribution.">
             <FeatureProfile features={result.features} title="Your patch’s feature profile"/>

@@ -12,6 +12,7 @@ import hashlib
 import importlib.metadata
 import itertools
 import json
+import math
 from pathlib import Path
 import time
 import urllib.request
@@ -30,12 +31,15 @@ from threadpoolctl import threadpool_limits
 
 from .clustering import calculate_metrics, cluster_summaries
 from .features import FEATURES, FEATURE_FAMILIES, FEATURE_NAMES, extract_features
+from .settings import COMPARISON_AUDIT_FILENAME, COMPARISON_MODEL_FILENAME, COMPARISON_RUN_ID
 
 SOURCE_URL = "https://zenodo.org/records/7711810"
 ARCHIVE_URL = "https://zenodo.org/api/records/7711810/files/EuroSAT_RGB.zip/content"
 EXPECTED_MD5 = "f46e308c4d50d4bf32fedad2d3d62f3b"
 SEED = 42
 VARIANCES = (0.9, 0.95, 0.99)
+COMPARISON_K = 10
+COMPARISON_VARIANCE = 0.95
 SELECTION_RULE = "Stage 1: for each representation, choose K=2..15 maximizing silhouette in the common full standardized descriptor space on the fixed screening cohort. Stage 2: among promoted PCA90/95/99 runs, maximize the same-space silhouette on a fixed 1,500-patch study sample. Within 0.005 of the best score, prefer higher mean pairwise seed ARI, then fewer components. Unreduced and fixed K=10 comparisons do not select the reference. No reference labels are loaded until study/model artifacts and this decision are frozen."
 
 
@@ -146,7 +150,27 @@ def prepare_features(archive: Path, data_dir: Path, checksum: str) -> dict:
     return {"ids": ids, "X": matrix, "quality": quality, "total_images": len(paths), "valid_images": len(paths) - unreadable, "feature_cache_reused": False, "feature_extraction_seconds": extraction_duration, "feature_signature": feature_signature}
 
 
-def write_audit(data_dir: Path, artifacts_dir: Path, ids: np.ndarray, labels: np.ndarray, holdout_ids: np.ndarray, holdout_labels: np.ndarray, run_id: str) -> None:
+def write_model(path: Path, run: dict, fit: dict, transforms: dict, checksum: str) -> None:
+    estimator, labels = fit["estimator"], fit["labels"]
+    distances = np.linalg.norm(fit["space"] - estimator.cluster_centers_[labels], axis=1)
+    model = {
+        **transforms,
+        "components": run["components"],
+        "kmeans": estimator,
+        "feature_names": FEATURE_NAMES,
+        "reference_run_id": run["id"],
+        "representatives": {cluster["id"]: cluster["representatives"] for cluster in run["clusters"]},
+        "cluster_distances": {
+            cluster: np.sort(distances[labels == cluster]) for cluster in range(run["k"])
+        },
+        "archive_sha256": checksum,
+    }
+    temporary = path.with_suffix(".joblib.tmp")
+    joblib.dump(model, temporary, compress=3)
+    temporary.replace(path)
+
+
+def write_audit(data_dir: Path, artifacts_dir: Path, ids: np.ndarray, labels: np.ndarray, holdout_ids: np.ndarray, holdout_labels: np.ndarray, run_id: str, *, filename: str = "audit.json") -> None:
     """The only function that opens reference annotations after selection freezes."""
     annotations = json.loads((data_dir / "reference_labels_evaluation_only.json").read_text())
     truth = np.array([annotations[str(patch_id)] for patch_id in ids])
@@ -155,7 +179,53 @@ def write_audit(data_dir: Path, artifacts_dir: Path, ids: np.ndarray, labels: np
     def external(reference: np.ndarray, predicted: np.ndarray) -> dict:
         return {"adjusted_rand_index": float(adjusted_rand_score(reference, predicted)), "normalized_mutual_information": float(normalized_mutual_info_score(reference, predicted)), "homogeneity": float(homogeneity_score(reference, predicted)), "completeness": float(completeness_score(reference, predicted))}
     audit = {"reference_run_id": run_id, "disclosure": "Post-hoc evaluation only: these dataset reference labels were not inputs to feature extraction, scaling, PCA, K-Means, sampling, K selection, variance selection or cluster descriptions.", "metrics": external(truth, labels), "holdout_metrics": external(holdout_truth, holdout_labels), "reference_classes": classes, "contingency": [{"cluster": int(cluster), "counts": {name: int(np.sum(truth[labels == cluster] == name)) for name in classes}, "total": int(np.sum(labels == cluster))} for cluster in sorted(np.unique(labels))], "notes": ["Cluster numbers are arbitrary and are not ten-class predictions.", "ARI and NMI are agreement measures, not classification accuracy.", "The audit was generated only after the reference study and model were saved.", "No class-balanced sampling or class-informed tuning was performed."], "frozen_study_sha256": hashlib.sha256((artifacts_dir / "study.json").read_bytes()).hexdigest(), "created_at": datetime.now(timezone.utc).isoformat()}
-    write_json(artifacts_dir / "audit.json", audit)
+    write_json(artifacts_dir / filename, audit)
+
+
+def build_comparison(args: argparse.Namespace) -> None:
+    """Regenerate the K=10 pair from an existing frozen study."""
+    data_dir, artifacts_dir = Path(args.data_dir), Path(args.artifacts_dir)
+    study = json.loads((artifacts_dir / "study.json").read_text())
+    split = json.loads((artifacts_dir / "split_manifest.json").read_text())
+    reference = joblib.load(artifacts_dir / "model.joblib")
+    archive, checksum = obtain_archive(data_dir)
+    if checksum != study["dataset"]["archive_sha256"] or checksum != reference["archive_sha256"]:
+        raise ValueError("The data archive does not match the frozen study and model")
+    if reference["reference_run_id"] != study["selected_run_id"] or reference["feature_names"] != FEATURE_NAMES:
+        raise ValueError("The fitted model does not match the frozen study")
+
+    prepared = prepare_features(archive, data_dir, checksum)
+    ids = np.array(split["study_ids"])
+    holdout_ids = np.array(split["holdout_ids"])
+    split_ids = (("study_id_sha256", ids), ("holdout_id_sha256", holdout_ids))
+    for key, values in split_ids:
+        if hashlib.sha256("\n".join(values).encode()).hexdigest() != study["split"][key]:
+            raise ValueError("The split manifest does not match the frozen study")
+
+    positions = {patch_id: index for index, patch_id in enumerate(prepared["ids"])}
+    raw = prepared["X"][[positions[patch_id] for patch_id in ids]]
+    holdout_raw = prepared["X"][[positions[patch_id] for patch_id in holdout_ids]]
+    transforms = {key: reference[key] for key in ("imputer", "scaler", "pca")}
+    imputer, scaler, pca = (transforms[key] for key in ("imputer", "scaler", "pca"))
+    standardized = scaler.transform(imputer.transform(raw))
+    holdout_standardized = scaler.transform(imputer.transform(holdout_raw))
+    run = next(candidate for candidate in study["runs"] if candidate["id"] == COMPARISON_RUN_ID)
+    space = pca.transform(standardized)[:, :run["components"]]
+    holdout_space = pca.transform(holdout_standardized)[:, :run["components"]]
+    estimator = KMeans(n_clusters=run["k"], n_init=10, random_state=run["seed"]).fit(space)
+    labels = estimator.labels_
+    groups = cluster_summaries(raw, standardized, space, labels, estimator.cluster_centers_, ids)
+    recorded_groups = [(group["id"], group["count"], group["representatives"]) for group in run["clusters"]]
+    observed_groups = [(group["id"], group["count"], group["representatives"]) for group in groups]
+    if not math.isclose(estimator.inertia_, run["metrics"]["inertia"], rel_tol=1e-9) or observed_groups != recorded_groups:
+        raise ValueError("Refitted K=10 inertia or representatives do not match the frozen study")
+    fit = {"space": space, "estimator": estimator, "labels": labels}
+    write_model(artifacts_dir / COMPARISON_MODEL_FILENAME, run, fit, transforms, checksum)
+    write_audit(
+        data_dir, artifacts_dir, ids, labels, holdout_ids, estimator.predict(holdout_space),
+        run["id"], filename=COMPARISON_AUDIT_FILENAME,
+    )
+    log(f"Regenerated {run['id']} model and post-selection audit")
 
 
 def build_study(args: argparse.Namespace) -> dict:
@@ -203,8 +273,8 @@ def build_study(args: argparse.Namespace) -> dict:
         log(f"Screen representation {variance}: promoted K={winner['k']}, common-space silhouette {winner['metrics']['silhouette_original']:.4f}")
     write_json(data_dir / "screening_results.json", {"runs": screen_rows})
     # A fixed-K contrast illustrates granularity without allowing reference labels to select the model.
-    if (0.95, 10) not in promoted:
-        promoted.append((0.95, 10))
+    if (COMPARISON_VARIANCE, COMPARISON_K) not in promoted:
+        promoted.append((COMPARISON_VARIANCE, COMPARISON_K))
     runs, fitted = [], {}
     for variance, k in promoted:
         tick = time.perf_counter()
@@ -235,11 +305,13 @@ def build_study(args: argparse.Namespace) -> dict:
     selected = max(finalists, key=lambda run: (run["stability"], -run["components"]))
     selected["selection_reason"] = SELECTION_RULE
     selected_state = fitted[selected["id"]]
+    comparison = next(run for run in runs if run["id"] == COMPARISON_RUN_ID)
+    comparison_state = fitted[COMPARISON_RUN_ID]
     log(f"REFERENCE FROZEN before audit: {selected['id']}")
     # Freeze fitted state before the evaluation adapter can open reference labels.
-    distances = np.linalg.norm(selected_state["space"] - selected_state["estimator"].cluster_centers_[selected_state["labels"]], axis=1)
-    model = {"imputer": imputer, "scaler": scaler, "pca": pca, "components": selected["components"], "kmeans": selected_state["estimator"], "feature_names": FEATURE_NAMES, "reference_run_id": selected["id"], "representatives": {cluster["id"]: cluster["representatives"] for cluster in selected["clusters"]}, "cluster_distances": {cluster: np.sort(distances[selected_state["labels"] == cluster]) for cluster in range(selected["k"])}, "archive_sha256": checksum}
-    joblib.dump(model, artifacts_dir / "model.joblib", compress=3)
+    transforms = {"imputer": imputer, "scaler": scaler, "pca": pca}
+    write_model(artifacts_dir / "model.joblib", selected, selected_state, transforms, checksum)
+    write_model(artifacts_dir / COMPARISON_MODEL_FILENAME, comparison, comparison_state, transforms, checksum)
     visual_positions = np.random.default_rng(SEED + 3).choice(len(raw), size=min(args.visual_samples, 3000, len(raw)), replace=False)
     visual_ids = ids[visual_positions]
     np.savez_compressed(artifacts_dir / "compact_features.npz", X=raw[visual_positions], ids=visual_ids)
@@ -320,6 +392,10 @@ def build_study(args: argparse.Namespace) -> dict:
     write_json(artifacts_dir / "study.json", study)
     write_json(artifacts_dir / "config.json", {"seed": SEED, "split": "80/20 label-blind random; deduplicated anonymous IDs", "feature_version": 1, "feature_count": len(FEATURE_NAMES), "pca_variances": list(VARIANCES), "k_range": [2, 15], "kmeans_n_init_screen": 5, "kmeans_n_init_full": 10, "full_seeds": [SEED, 17, 91], "screen_samples": len(cohort), "metric_samples": len(metric_cohort), "visual_samples": len(visual_ids), "trustworthiness_samples": len(trust_positions), "tsne_perplexities": [10, 30, 50], "tsne_seeds": [SEED, 17], "tsne_iterations": args.tsne_iterations, "tsne_initialization": "random", "tsne_pre_pca_components": pre_dimensions, "tsne_learning_rate": "auto", "selected_run_id": selected["id"], "selection_rule": SELECTION_RULE, "archive_sha256": checksum})
     write_audit(data_dir, artifacts_dir, ids, selected_state["labels"], holdout_ids, selected_state["holdout_labels"], selected["id"])
+    write_audit(
+        data_dir, artifacts_dir, ids, comparison_state["labels"], holdout_ids, comparison_state["holdout_labels"],
+        comparison["id"], filename=COMPARISON_AUDIT_FILENAME,
+    )
     log(f"Complete: real frozen study, model, {len(preview_ids):,} previews and separate audit; {time.perf_counter() - started:.1f}s total")
     return study
 
@@ -331,11 +407,15 @@ def main() -> None:
     parser.add_argument("--screen-samples", type=int, default=5000)
     parser.add_argument("--visual-samples", type=int, default=3000)
     parser.add_argument("--tsne-iterations", type=int, default=750)
+    parser.add_argument("--comparison-only", action="store_true", help="Regenerate the K=10 artifacts without overwriting the frozen study.")
     args = parser.parse_args()
     if not 200 <= args.screen_samples <= 10000 or not 100 <= args.visual_samples <= 3000 or not 250 <= args.tsne_iterations <= 3000:
         parser.error("Bounds: screen samples 200..10000; visual samples 100..3000; t-SNE iterations 250..3000")
     with threadpool_limits(limits=3):
-        build_study(args)
+        if args.comparison_only:
+            build_comparison(args)
+        else:
+            build_study(args)
 
 
 if __name__ == "__main__":

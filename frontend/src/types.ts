@@ -49,6 +49,7 @@ export interface Capabilities {
   upload_max_bytes: number;
   storage: string;
   reference_run_id: string;
+  analysis_runs?: string[];
 }
 export type LivePerplexity = 10 | 30 | 50;
 export interface ExperimentConfig {
@@ -76,6 +77,7 @@ export interface Analysis {
   run_id?: string;
   cluster: number;
   cluster_description?: string;
+  cohort_clusters?: number[];
   pca: XY;
   distance: number;
   relative_distance: number | null;

@@ -8,7 +8,13 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 
 from terralens import __version__
 from terralens.api.resources import SAFE_ID, Resources
-from terralens.settings import MAX_LIVE_TSNE_SAMPLES, MAX_SAMPLES, MAX_UPLOAD
+from terralens.settings import (
+    COMPARISON_AUDIT_FILENAME,
+    COMPARISON_RUN_ID,
+    MAX_LIVE_TSNE_SAMPLES,
+    MAX_SAMPLES,
+    MAX_UPLOAD,
+)
 
 router = APIRouter(tags=["Reference study"])
 
@@ -20,13 +26,15 @@ def health(resources: Resources):
 
 @router.get("/capabilities")
 def capabilities(resources: Resources):
+    analysis_runs = resources.analysis_run_ids() if resources.study_ready else []
     return {
         "max_experiment_samples": MAX_SAMPLES,
         "live_tsne": True,
         "max_live_tsne_samples": min(MAX_SAMPLES, MAX_LIVE_TSNE_SAMPLES),
         "upload_max_bytes": MAX_UPLOAD,
         "storage": "Reference results are permanent. Live experiment history is temporary on free hosting. Export important results.",
-        "reference_run_id": resources.require_artifact("study.json").get("selected_run_id") if resources.study_ready else None,
+        "reference_run_id": analysis_runs[0] if analysis_runs else None,
+        "analysis_runs": analysis_runs,
     }
 
 
@@ -36,7 +44,12 @@ def study(resources: Resources):
 
 
 @router.get("/audit")
-def reference_audit(resources: Resources):
+def reference_audit(resources: Resources, run_id: str | None = None):
+    if run_id is not None and resources.uses_comparison(run_id):
+        audit = resources.require_artifact(COMPARISON_AUDIT_FILENAME)
+        if audit.get("reference_run_id") != COMPARISON_RUN_ID:
+            raise HTTPException(503, "The saved category audit does not match this run.")
+        return audit
     return resources.require_artifact("audit.json")
 
 

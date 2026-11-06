@@ -60,7 +60,7 @@ class UploadBodyLimitMiddleware:
             await self.app(scope, bounded_receive, send)
 
 
-def analyze_upload(raw: bytes, artifacts_dir: Path) -> dict:
+def analyze_upload(raw: bytes, artifacts_dir: Path, comparison: bool = False) -> dict:
     """Decode, validate, resize and infer in the single bounded image worker."""
     notices = []
     try:
@@ -85,7 +85,7 @@ def analyze_upload(raw: bytes, artifacts_dir: Path) -> dict:
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError, Image.DecompressionBombWarning):
         raise HTTPException(422, "The file could not be decoded as a safe image.") from None
     from terralens.inference import analyze_image
-    result = analyze_image(image, artifacts_dir)
+    result = analyze_image(image, artifacts_dir, comparison=comparison)
     result["warnings"] = notices + result.get("warnings", [])
     result["input_size"] = [width, height]
     result["retention"] = "The uploaded image is not retained after this request; temporary upload buffers are closed."

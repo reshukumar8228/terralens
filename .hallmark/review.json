@@ -1,0 +1,117 @@
+{
+  "date": "2026-11-06",
+  "scope": "Research workbench; Hallmark visual guidance applied to a working data application",
+  "structure": "Forest side rail, paper work area, genuine image mosaic, linked charts, galleries, parameter controls, scientific evidence",
+  "fonts": [
+    "Manrope",
+    "IBM Plex Mono"
+  ],
+  "contrast_method": "OKLCH converted to clipped linear sRGB; WCAG 2.1 relative luminance ratio",
+  "contrast_pairs": [
+    {
+      "foreground": "ink",
+      "background": "paper",
+      "wcag_ratio": 14.16,
+      "threshold": 4.5,
+      "passes": true
+    },
+    {
+      "foreground": "body",
+      "background": "surface",
+      "wcag_ratio": 10.06,
+      "threshold": 4.5,
+      "passes": true
+    },
+    {
+      "foreground": "muted",
+      "background": "paper",
+      "wcag_ratio": 5.97,
+      "threshold": 4.5,
+      "passes": true
+    },
+    {
+      "foreground": "faint",
+      "background": "surface",
+      "wcag_ratio": 4.9,
+      "threshold": 4.5,
+      "passes": true
+    },
+    {
+      "foreground": "on-forest",
+      "background": "forest",
+      "wcag_ratio": 12.37,
+      "threshold": 4.5,
+      "passes": true
+    },
+    {
+      "foreground": "on-forest-muted",
+      "background": "forest",
+      "wcag_ratio": 6.3,
+      "threshold": 4.5,
+      "passes": true
+    },
+    {
+      "foreground": "on-forest-faint",
+      "background": "forest",
+      "wcag_ratio": 5.25,
+      "threshold": 4.5,
+      "passes": true
+    },
+    {
+      "foreground": "accent-ink",
+      "background": "accent",
+      "wcag_ratio": 7.94,
+      "threshold": 4.5,
+      "passes": true
+    },
+    {
+      "foreground": "focus",
+      "background": "surface",
+      "wcag_ratio": 3.92,
+      "threshold": 3,
+      "passes": true
+    },
+    {
+      "foreground": "cluster-1",
+      "background": "surface",
+      "wcag_ratio": 3.76,
+      "threshold": 3,
+      "passes": true
+    }
+  ],
+  "source_review": {
+    "no_fabricated_metrics": true,
+    "no_gradient_or_glass_effects": true,
+    "native_dialog_focus_and_escape": true,
+    "focus_visible_and_disabled_states": true,
+    "reduced_motion": true,
+    "self_hosted_fonts": true,
+    "image_grid_minmax_tracks": true,
+    "page_overflow_clip": true,
+    "same_cohort_projection_comparison": true,
+    "recorded_and_live_runs_distinguished": true,
+    "reference_audit_separate": true,
+    "context_correct_patch_inspection": true,
+    "comparison_uses_common_feature_space": true
+  },
+  "observed_fixes": [
+    "Skip link focuses main content without changing the view hash.",
+    "Saved K10 atlas retains its own run/group feature profile in the inspector.",
+    "Live scatter retains its independently fitted PCA coordinates, groups, and run-mean profile.",
+    "History entries fetch complete job detail before displaying results.",
+    "Reference t-SNE defaults to perplexity30, seed42.",
+    "Primary cross-representation score uses silhouette_original; run-space scores labelled explicitly.",
+    "Seed stability shows fixed four-decimal precision.",
+    "Field guide accessible on mobile.",
+    "Faint helper and rail text contrast improved above4.5:1."
+  ],
+  "verification": {
+    "typescript": "npm run typecheck passed after final source fixes",
+    "production_build": "See final npm run build output",
+    "browser": "Root owner performs final desktop/mobile interaction checks and screenshots"
+  },
+  "limitations": [
+    "No blanket 58-of-58 marketing-page gate claim: data tables, charts and compact scientific labels follow application-specific requirements.",
+    "Full browser responsiveness is independently checked by the integrating root agent."
+  ]
+}

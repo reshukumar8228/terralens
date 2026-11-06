@@ -11,4 +11,9 @@ __pycache__/
 !.env.example
 runtime/
 tmp/
-output/submission/*.zip
+output/
+.build/
+.chart-data-*/
+*.tsbuildinfo
+team.json
+PROJECT_LINKS.txt

@@ -1,0 +1,9 @@
+{
+  "date": "2026-11-06",
+  "existing_signals": false,
+  "framework": "React / Vite / TypeScript",
+  "fonts": ["Manrope", "IBM Plex Mono"],
+  "palette": "forest, paper, restrained amber",
+  "motion": "state feedback only",
+  "spacing": "4pt"
+}

@@ -1,0 +1,8 @@
+Project Title: Unsupervised Land-Type Grouping of Satellite Image Patches Using Clustering
+Problem Statement ID: SIH26142
+Subject Code: INT396
+Registration Numbers of All Group Members: Populate local team.json
+GitHub Repository Link: https://github.com/z-lovejeet/terralens
+Live Deployed Project Link: See links.json
+
+Personalised report, slides, team.json and PROJECT_LINKS.txt belong in the local submission ZIP.

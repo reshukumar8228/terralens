@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: terralens
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: TERRALENS_MAX_SAMPLES
+        value: "1000"
+      - key: TERRALENS_RUNTIME
+        value: /tmp/terralens-runtime

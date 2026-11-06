@@ -1,5 +1,18 @@
 # Verification record
 
+## Two- and ten-group upload comparison
+
+TerraLens 1.2 adds a grouping choice to Patch Analyzer. Both example patches reuse the same 28-component PCA representation in both modes. The fitted centroids, neighbor ranking and group-level category audit follow the selected run.
+
+| Held-out upload | Two-group reference | Ten-group comparison |
+| --- | --- | --- |
+| `demo-patch-01.jpg` | Group 01 | Group 10 |
+| `demo-patch-02.jpg` | Group 02 | Group 04 |
+
+The 29-test suite passed, including comparison assignment, shared PCA coordinates, ordered cohort groups, run selection validation and reference-only artifact compatibility. The production frontend build passed. On Render 1.2, both held-out images returned the expected results in both modes. In the deployed browser, changing models kept the selected image, cleared the result and displayed the new group, its matching neighbors and its separately loaded category mix after analysis. The deployed result also fit a 375 px viewport. The local patch inspector identified the K=10 comparison. Full study reproduction and comparison-only regeneration both produced the ten-group model and audit.
+
+## Reference and live experiment checks
+
 TerraLens 1.1 preserves the frozen reference run `pca95-k2-s42` and its evidence from 27,000 EuroSAT RGB patches. The upgrade adds query-specific image analysis and optional live t-SNE.
 
 ## Application checks
@@ -45,4 +58,4 @@ Current application screenshots are in `docs/screenshots/`. Reference evidence r
 
 For this follow-up audit, the original split IDs were matched to the full descriptor cache. The frozen imputer, scaler and first 28 PCA components transformed the study and holdout rows. The comparison used `KMeans(n_clusters=10, n_init=10, random_state=42)` on study rows only. Its inertia matched the recorded run within floating-point tolerance. Reference labels were loaded only after fitting and generating both sets of holdout assignments. The common-space silhouette values are from the stored study comparison. The external agreement values use all 5,400 holdout rows.
 
-The K=10 groups show higher agreement with the reference labels and weaker geometric separation in the common descriptor space. Assigning each K=10 group its most common **study** label gave 52.65% accuracy and 0.442 macro F1 on the holdout. This simple mapping predicted eight categories and missed Highway and Pasture entirely. One river-leading group contained 379 River patches among 1,205 holdout members. The mapping is an offline diagnostic only. The deployed analyzer returns the frozen visual group and presents reference category proportions separately.
+The K=10 groups show higher agreement with the reference labels and weaker geometric separation in the common descriptor space. Assigning each K=10 group its most common **study** label gave 52.65% accuracy and 0.442 macro F1 on the holdout. This simple mapping predicted eight categories and missed Highway and Pasture entirely. One river-leading group contained 379 River patches among 1,205 holdout members. The mapping is an offline diagnostic only. The analyzer returns the visual group for the selected fitted model and presents reference category proportions separately.

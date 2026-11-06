@@ -22,20 +22,20 @@ Returns `{project, dataset, preprocessing, split, quality, feature_names, featur
 ## Other endpoints
 - `GET /health` -> `{status,study_ready,version}`.
 - `GET /patches/{id}.jpg` -> anonymous JPEG, or 404.
-- `GET /audit` -> separate frozen study audit JSON (reference labels used only after fitting/selection).
+- `GET /audit` -> separate frozen study audit JSON (reference labels used only after fitting and selection). Supply `?run_id=pca95-k10-s42` for the ten-group comparison audit when available.
 - `GET /features` -> `{features:[{name,family,description}], ...}`.
 - `POST /experiments` body `{k:2..15,variance:0.9|0.95|0.99,seed:0..9999,sample_size:200..3000,tsne_perplexity:10|30|50|null}` -> `{id,status}`. Backend may cap hosted samples, explicitly advertise in `/capabilities`.
 - `GET /experiments/{id}` -> `{id,status:queued|running|completed|failed,stage,config,result?:{...run,points:[{id,pca,cluster,tsne?}],tsne?:{perplexity,trustworthiness,runtime_seconds},...},error?:string}`. An optional new t-SNE fit runs on the same retained PCA features and uses the same point IDs and existing K-Means group colours.
 - `GET /experiments` -> `{experiments:[job...]}` newest first.
-- `POST /analyze` multipart `file` -> `{run_id,cluster,cluster_description,pca:[x,y],distance,alternate_cluster,alternate_distance,margin,relative_distance,reference_percentile,representatives:string[],neighbors:[{id,distance}],neighbor_scope,features:[{name,value,zscore}],warnings:string[]}`. No class probability or t-SNE coordinate. Distances and neighbors use the full retained PCA space. Neighbors are ranked within the assigned group of the bundled preview cohort. The browser can export this response as JSON without the input image.
+- `POST /analyze` multipart `file` and optional `?run_id=pca95-k10-s42` -> `{run_id,cluster,cluster_description,pca:[x,y],distance,alternate_cluster,alternate_distance,margin,relative_distance,reference_percentile,representatives:string[],neighbors:[{id,distance}],neighbor_scope,features:[{name,value,zscore}],warnings:string[],cohort_clusters?:number[]}`. The reference run is the default. The comparison returns `cohort_clusters` in the order of `study.points`. Distances and neighbors use the full retained PCA space. Neighbors are ranked within the assigned group of the bundled preview cohort. The browser can export this response as JSON without the input image.
 - `GET /export/study.json`, `/export/metrics.csv`, `/export/config.json` -> downloadable recorded data. `GET /export/experiments/{id}.json` downloads a runtime job record.
-- `GET /capabilities` -> `{max_experiment_samples,live_tsne:true,max_live_tsne_samples,upload_max_bytes,storage,reference_run_id}`.
+- `GET /capabilities` -> `{max_experiment_samples,live_tsne:true,max_live_tsne_samples,upload_max_bytes,storage,reference_run_id,analysis_runs:string[]}`. Only bundled analysis runs are selectable.
 
 FastAPI serves `/` and built frontend assets if `frontend/dist` exists. Vite dev proxies `/api` to `http://127.0.0.1:8000`. Frontend reads only this contract and must not fabricate fallback numbers if data unavailable.
 
 ## ML Python integration
 `backend/terralens/features.py`: `extract_features(PIL.Image)->np.ndarray`, `FEATURE_NAMES`, feature dictionary.
-`backend/terralens/inference.py`: `analyze_image(image, artifacts_dir)->dict` applies saved transforms and ranks reference patches.
+`backend/terralens/inference.py`: `analyze_image(image, artifacts_dir, *, comparison=False)->dict` applies saved transforms and ranks reference patches.
 
 `backend/terralens/experiments.py`: `run_experiment(config, artifacts_dir)->dict` fits independently on the compact study feature matrix. The route modules in `backend/terralens/api/` handle the HTTP contract.
 `scripts/prepare_study.py`: runnable full download/study command, configurable performance bounds; stores compact inference artifacts and reference JSON in `artifacts/`.

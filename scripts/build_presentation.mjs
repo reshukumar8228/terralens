@@ -171,7 +171,7 @@ await fs.mkdir(BUILD,{recursive:true}); await fs.mkdir(OUT,{recursive:true});
 }
 // 09 - real app evidence
 {
-  const q=slide("Working application",`20 seconds. Name the six views, then save detailed interaction for the separate live demo. Observatory, Projection Lab, Cluster Atlas, Experiment Bench, Patch Analyzer and Study & Evidence are connected to real API data. Projection Lab shows saved results. Experiment Bench can fit PCA, K-Means and t-SNE on one bounded cohort. In Patch Analyzer, two held-out examples reach different groups and show centroid diagnostics and ranked reference patches. The screenshot shows the running analyzer.`);
+  const q=slide("Working application",`20 seconds. Name the six views, then save detailed interaction for the separate live demo. Observatory, Projection Lab, Cluster Atlas, Experiment Bench, Patch Analyzer and Study & Evidence are connected to real API data. Projection Lab shows saved results. Experiment Bench can fit PCA, K-Means and t-SNE on one bounded cohort. In Patch Analyzer, choose the two-group reference or ten-group comparison. Rerun the same image and compare the assigned group, centroid gap and reference neighbors. The separate category mix explains the group composition. The screenshot shows the running analyzer.`);
   const available=await img(q,path.join(ROOT,"docs/screenshots/patch-analyzer.png"),64,150,885,455)||await img(q,path.join(ROOT,"docs/screenshots/patch-analyzer.jpg"),64,150,885,455);
   if(!available)lines(q,["Observatory and Projection Lab","Cluster Atlas and Experiment Bench","Patch Analyzer and Study & Evidence"],64,185,850,32,115);
   tx(q,"Inspect patches\nCompare parameters\nFit a fresh t-SNE\nAnalyse an upload\nExport evidence",990,175,235,350,25,{bold:true});
@@ -206,7 +206,7 @@ await fs.mkdir(BUILD,{recursive:true}); await fs.mkdir(OUT,{recursive:true});
 }
 // 13 - appendix: editable system diagram
 {
-  const q=slide("Architecture and upload workflow",`Appendix. The offline pipeline writes immutable artifacts, which FastAPI serves to React. Uploaded images pass through saved preprocessing and centroids; the model is not refitted. A separate bounded experiment uses anonymous study descriptors and records independent results in SQLite/disk. GET/api/capabilities advertises host limits. Sources: backend/terralens and docs/API_CONTRACT.md.`,{appendix:true});
+  const q=slide("Architecture and upload workflow",`Appendix. The offline pipeline writes immutable artifacts, which FastAPI serves to React. Uploaded images pass through saved preprocessing and the selected frozen centroids. Both groupings share the 95 percent PCA space, and their K-Means centres were fitted separately. A separate bounded experiment uses anonymous study descriptors and records independent results in SQLite/disk. GET/api/capabilities advertises host limits. Sources: backend/terralens and docs/API_CONTRACT.md.`,{appendix:true});
   const a1=node(q,"Study artifacts\nJSON + model + previews",64,170,320),a2=node(q,"FastAPI\nvalidation and jobs",480,170,320),a3=node(q,"React\nsix inspection views",896,170,320);
   arrow(q,a1,a2);arrow(q,a2,a3);
   const b1=node(q,"Image upload",64,390,260),b2=node(q,"Saved feature / scaler / PCA\nnearest centroid",430,390,420),b3=node(q,"Group + distance\nPCA + examples",950,390,266);

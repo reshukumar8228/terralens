@@ -1,9 +1,10 @@
 {
-  "automated_tests": "26 passed. Covered numerical invariants, input validation, saved-model analysis, ranked neighbors, and live PCA, K-Means and t-SNE.",
-  "frontend_build": "TypeScript and Vite production build passed. GitHub Actions passed for the 1.1 runtime release.",
-  "browser_workflows": "Two real file uploads, separate category mix, JSON export, a fresh experiment, and restoration of the completed hosted run.",
-  "responsive_layout": "Updated analyzer and experiment views fit 375 px without page overflow. All six original workspaces were previously checked at four widths.",
-  "reference_artifacts": "27,000 EuroSAT RGB patches, frozen reference model, anonymous split, six recorded t-SNE layouts and separate audit preserved.",
+  "automated_tests": "29 passed. Covered numerical invariants, input validation, two- and ten-group analysis, ranked neighbors, and live PCA, K-Means and t-SNE.",
+  "frontend_build": "TypeScript and Vite production build passed.",
+  "browser_workflows": "Both upload modes tested with the same image, including run-specific PCA markers, neighbors, inspector and category mix. The release retains live job history and JSON export.",
+  "responsive_layout": "The updated analyzer with its ten-group result fits 375 px. Earlier checks covered all six workspaces at four widths.",
+  "reference_artifacts": "27,000 EuroSAT patches and the frozen reference evidence preserved. Separate ten-group model and audit reproduced.",
   "hosted_uploads": "Two held-out EuroSAT patches reached Groups 01 and 02. Each returned eight distinct ranked reference neighbors, with centroid gaps of 7.216 and 7.900.",
-  "hosted_live_run": "K=3, 200 patches, 95% PCA target, seed 42, perplexity 30. 22 PCs retained 95.34%; trustworthiness 0.9408; total runtime 7.90 s. Export matched the job result."
+  "hosted_live_run": "K=3, 200 patches, 95% PCA target, seed 42, perplexity 30. 22 PCs retained 95.34%; trustworthiness 0.9408; total runtime 7.90 s. Export matched the job result.",
+  "comparison_uploads": "Both examples verified on Render. Reference assignments 01 and 02 changed to comparison groups 10 and 04. Each patch kept the same PCA coordinates."
 }

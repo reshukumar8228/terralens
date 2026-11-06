@@ -52,11 +52,13 @@ PYTHONPATH=backend .venv/bin/python scripts/prepare_study.py
 
 The full run downloads/verifies the original archive, validates and hashes images, extracts documented features, makes a seeded anonymous split, fits numerical transformations on study rows, executes the comparison study, freezes selection and writes a separate reference audit. It can take several minutes or longer depending on the machine and download connection. Read the script's help for performance bounds. Back up `artifacts/` before deliberately replacing a published reference study.
 
+To rebuild just the ten-group model and its separate audit against the recorded study, run `.venv/bin/python scripts/prepare_study.py --comparison-only`.
+
 Precomputed reference results are explicitly identified in the interface; they are measurements, not simulated responses. Live experiments fit an independent bounded sample of anonymous study descriptors. Their PCA axes and cluster IDs belong to that run and are not automatically aligned with the reference view.
 
 ## Try the live workflows
 
-- In **Patch Analyzer**, upload the two [held-out example patches](examples/README.md) one at a time. Compare the visual group, runner-up centroid gap, ranked reference neighbors and JSON exports.
+- In **Patch Analyzer**, upload the two [held-out example patches](examples/README.md) one at a time. Analyze each image with the two-group reference, then switch to the ten-group comparison and run the same file again. Compare its group, runner-up centroid gap, ranked neighbors and the separate category mix.
 - In **Experiment Bench**, select K=3, 95% PCA, seed 42, 200 patches and t-SNE perplexity 30. The backend fits a fresh run and returns matched PCA and t-SNE views. The run has its own cluster numbering.
 - Read the [codebase walkthrough](docs/CODEBASE_GUIDE.md) to trace each request through the frontend, API and numerical modules.
 

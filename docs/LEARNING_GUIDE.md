@@ -109,7 +109,7 @@ Choose a bounded sample size, K, variance target and seed in Experiment Bench. T
 
 ### Analyse a new patch
 
-The API validates and decodes the image, extracts the same 78 descriptors, then calls the saved imputer, scaler, PCA and K-Means in that order. It returns the assigned cluster, PCA coordinate, the closest two centroid distances, and up to eight ranked neighbors in the assigned group of the anonymous preview cohort. The PCA chart shows two components while the ranking uses all retained components. A reference-distance percentile describes how far the input is from its centroid compared with that group's reference distances. It is not a calibrated probability, certainty score, or validated out-of-distribution detector.
+The API validates and decodes the image, extracts the same 78 descriptors, then calls the saved imputer, scaler, PCA and K-Means in that order. The analyzer can use either the selected two-group reference or the frozen ten-group contrast. It returns the assigned cluster, PCA coordinate, the closest two centroid distances, and up to eight ranked neighbors in the assigned group of the anonymous preview cohort. The PCA chart shows two components while the ranking uses all retained components. A reference-distance percentile describes how far the input is from its centroid compared with that group's reference distances. It is not a calibrated probability, certainty score, or validated out-of-distribution detector.
 
 ## 10. Trace the code
 

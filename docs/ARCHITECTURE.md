@@ -2,7 +2,7 @@
 
 ## System boundaries
 
-TerraLens has an offline study pipeline and an online inspection application. The offline pipeline creates an immutable reference study and a fitted model. The application reads those artifacts, performs independent bounded experiments and applies the saved reference pipeline to uploaded images.
+TerraLens has an offline study pipeline and an online inspection application. The offline pipeline creates an immutable reference study and a fitted model. The application reads those artifacts, performs independent bounded experiments and applies a fitted two-group or ten-group pipeline to uploaded images.
 
 ```mermaid
 flowchart LR
@@ -52,12 +52,12 @@ The definitive typed payload contract is `API_CONTRACT.md`. The base path is `/a
 | `GET /study` | Return the immutable public reference bundle |
 | `GET /features` | Return feature names, families and definitions |
 | `GET /patches/{id}.jpg` | Return a validated anonymous preview image |
-| `GET /audit` | Open the separate post-selection reference-label audit |
+| `GET /audit` | Open the separate post-fit label audit for a supported run |
 | `GET /capabilities` | Advertise actual host limits and storage behaviour |
 | `POST /experiments` | Submit bounded K, variance, seed, sample size and optional t-SNE perplexity |
 | `GET /experiments` | List recent experiment jobs |
 | `GET /experiments/{id}` | Poll status, stage, result or failure |
-| `POST /analyze` | Validate an image and apply the saved reference pipeline |
+| `POST /analyze` | Validate an image and apply the chosen fitted grouping |
 | `GET /export/study.json` | Download the study record |
 | `GET /export/metrics.csv` | Download recorded numerical metrics |
 | `GET /export/config.json` | Download reproducibility settings |
@@ -76,7 +76,7 @@ sequenceDiagram
   U->>R: Choose image
   R->>A: POST /api/analyze (multipart file)
   A->>A: Check size, format and decoding
-  A->>P: Extract descriptors and transform
+  A->>P: Extract descriptors and transform for selected run
   P->>P: Assign nearest centroid and rank neighbors
   P-->>A: Group, runner-up, PCA coordinates and evidence
   A-->>R: JSON with interpretation warnings

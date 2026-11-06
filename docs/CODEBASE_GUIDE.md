@@ -1,6 +1,6 @@
 # TerraLens codebase guide
 
-Start with a patch in the application, then follow its request through the files below. TerraLens has three numerical workflows with different fitting rules. The offline study fits and selects a reference model. Patch Analyzer applies that model to one image. Experiment Bench fits a new model on a bounded sample of study descriptors.
+Start with a patch in the application, then follow its request through the files below. TerraLens has three numerical workflows with different fitting rules. The offline study fits and selects a reference model. Patch Analyzer applies the reference or the saved ten-group comparison to one image. Experiment Bench fits a new model on a bounded sample of study descriptors.
 
 ## Where to start
 
@@ -16,12 +16,12 @@ Start with a patch in the application, then follow its request through the files
 
 ## Trace one uploaded image
 
-1. Choose a satellite RGB patch in **Patch Analyzer** and click **Analyze patch**. The frontend sends the file as multipart form data to `POST /api/analyze`.
+1. Choose a satellite RGB patch and a visual grouping in **Patch Analyzer**, then click **Analyze patch**. The frontend sends the file as multipart form data to `POST /api/analyze` with the selected run ID.
 2. The analyzer route and `uploads.py` enforce the upload limits, decode the actual image, convert it to RGB and resize it to 64 × 64. The image worker passes the decoded patch to the numerical code and releases the upload buffer after processing.
-3. `features.py` computes the same 78 colour, texture and edge descriptors used offline. `inference.py` applies the fitted imputer, scaler and PCA from `artifacts/model.joblib`. The 2D marker uses the first two PCA coordinates. The centroid comparison uses the full retained PCA vector.
+3. `features.py` computes the same 78 colour, texture and edge descriptors used offline. `inference.py` applies the fitted imputer, scaler and PCA from the fitted model bundle. `model.joblib` holds the study reference, and `comparison-model.joblib` holds the ten-group fit. The 2D marker uses the first two PCA coordinates. The centroid comparison uses the full retained PCA vector.
 4. The frozen K-Means model supplies the group and distances to the assigned and runner-up centroids. The gap is `runner-up distance - assigned distance`. A small gap means those two distances are similar. The reference percentile compares the assigned distance with recorded distances for that group, which helps distinguish a typical assignment from a patch far from its centroid.
 5. The backend ranks compact study patches from the assigned group by their distances to the uploaded patch in retained PCA space and returns up to eight neighbours. `neighbor_scope` records how many candidates it searched. These query-specific neighbours can change when the image changes. The fixed representatives are the patches nearest the group's centroid. The response includes `run_id` so the displayed distances and examples can be traced to that reference.
-6. Open the group category mix separately if asked about land cover. It describes the proportions of EuroSAT reference categories within the **whole assigned group** after the model was frozen. Use it to discuss overlap between visual groups and annotated classes. The percentage refers to the group aggregate and cannot establish the uploaded patch's category.
+6. Open the group category mix separately if asked about land cover. It describes the proportions of EuroSAT reference categories within the **whole assigned group** after the model was frozen. The audit and neighbor list follow the selected run. Use them to discuss overlap between visual groups and annotated classes. The percentage refers to the group aggregate and cannot establish the uploaded patch's category.
 7. Export the analysis JSON. It records the returned coordinates, distances, neighbours, run ID and feature measurements. The export uses the numerical response and excludes the uploaded image bytes.
 
 For a demo, show two different patches and point to the changing neighbour order. Explain the runner-up gap, then open the aggregate category mix to show why a visual group can contain multiple annotated classes. In the browser's network view, match `run_id`, `cluster`, `pca`, `distance`, `alternate_distance`, `margin` and `neighbors` in the `POST /api/analyze` response with the JSON download.
@@ -41,9 +41,9 @@ PCA stores a linear transformation that applies to one new feature vector. The s
 | Artifact | When it is produced | Where it is used |
 | --- | --- | --- |
 | `study.json` and `config.json` | Offline study with fixed seeds and a recorded selection rule | Reference metrics, PCA axes, saved t-SNE comparison, settings and provenance. |
-| `model.joblib` | Offline reference fit on study rows | Saved imputer, scaler, PCA, K-Means and distance distributions for uploaded patches. |
+| `model.joblib` and `comparison-model.joblib` | Offline two-group reference and ten-group comparison fits on study rows | Saved imputer, scaler, PCA, K-Means and distance distributions for uploaded patches. |
 | `compact_features.npz` and `thumbnails/` | Offline selection of anonymous study descriptors and preview images | Bounded live experiments, query-specific neighbour lookup and patch inspection. The raw dataset archive is unnecessary for this demonstration. |
-| `split_manifest.json`, `features.json` and `audit.json` | Offline preparation and post-selection audit | Check the anonymous study/holdout boundary and descriptor definitions. Open the audit to interpret agreement and category proportions after fitting. |
+| `split_manifest.json`, `features.json` and `audit.json` | Offline preparation and post-selection audit | Check the anonymous study/holdout boundary and descriptor definitions. The reference audit and separate `comparison-audit.json` describe category agreement and group proportions after fitting. |
 | Runtime SQLite journal | When the user starts a live experiment | Job history and results. A free host can reset runtime storage. |
 
 The larger offline study precomputes the reference comparisons so opening the site does not download EuroSAT or refit the models. Upload analysis and fresh experiments execute on demand. The reference `study.json` remains the source for the report and the saved study screens.

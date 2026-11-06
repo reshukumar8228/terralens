@@ -46,7 +46,7 @@ Run K=3 with 95% PCA, seed 42, 200 patches and t-SNE perplexity 30. Show the mat
 
 ### Patch Analyzer
 
-Upload `demo-patch-01.jpg`, then `demo-patch-02.jpg`. The expected outputs are Group 01 and Group 02. Trace the 78 descriptors, saved preprocessing and nearest-centroid assignment. Show the runner-up gap and ranked reference patches. The gap is the second-smallest centroid distance minus the smallest one. If asked about land type, open the separate category mix and explain that it describes the frozen group, then export the individual analysis JSON.
+Start with the two-group reference. Upload `demo-patch-01.jpg`, then `demo-patch-02.jpg`. The expected outputs are Group 01 and Group 02. Keep the second image selected, switch to the ten-group comparison, and analyze it again. Explain that the same image uses the same PCA coordinates while the centroid assignment and nearby reference patches come from the selected grouping. Trace the 78 descriptors, saved preprocessing and nearest-centroid assignment. Show the runner-up gap and ranked reference patches. The gap is the second-smallest centroid distance minus the smallest one. If asked about land type, open the separate category mix and explain that it describes the frozen group, then export the individual analysis JSON.
 
 ### Study & Evidence
 

@@ -451,7 +451,7 @@ def build_report(study, selected, audit, team, links, figures):
         WorkflowDiagram(), Spacer(1, 10),
         table([["Component", "Responsibility"], ["Offline study", "Validate archive, describe images, compare settings and freeze selection"], ["Reference artifacts", "Fitted transforms, centroids, measured JSON and anonymous previews"], ["Online application", "Inspect evidence, run independent bounded jobs and analyse uploads"]], [115, 372]),
         heading("Upload workflow"),
-        para("Upload validation -> RGB conversion and fixed resize -> 78 descriptors -> saved imputer -> saved standardiser -> saved PCA -> nearest saved K-Means centroid -> the result, runner-up gap and ranked neighbours from the assigned group of the bundled reference cohort. The upload uses the frozen transforms and centres."),
+        para("Upload validation -> RGB conversion and fixed resize -> 78 descriptors -> saved imputer -> saved standardiser -> saved PCA -> nearest saved K-Means centroid -> the result, runner-up gap and ranked neighbours from the assigned group of the bundled reference cohort. Users can choose the two-group study reference or the fitted ten-group comparison and rerun the same image. Each mode reports its own groups, nearest examples and separate category mix."),
         heading("Runtime experiments"),
         para("A separate bounded experiment fits its own preprocessing, PCA and K-Means on an anonymous compact study sample. Optional t-SNE uses the same retained PCA cohort. Each live run has its own coordinates and group IDs. The API serialises jobs to control resources and keeps the reference model immutable."),
         heading("Tools and technologies"),
@@ -469,7 +469,7 @@ def build_report(study, selected, audit, team, links, figures):
     shots = [
         ("observatory", "Application: Observatory", "The overview connects genuine patch imagery with the selected reference study, dataset audit and numerical evidence."),
         ("projection-lab", "Application: Projection Lab", "Linked patch identity supports comparison of PCA and saved t-SNE views on the same visual cohort. Parameter settings and interpretation cautions are visible."),
-        ("patch-analyzer", "Application: Patch Analyzer", "A validated upload uses the saved reference pipeline. The result shows both centroid distances, their gap, ranked reference patches and a PCA location. The JSON export captures the result and its interpretation warnings."),
+        ("patch-analyzer", "Application: Patch Analyzer", "The grouping selector applies the fitted two-group reference or ten-group comparison to a validated upload. The result includes both centroid distances, their gap, ranked neighbours and a PCA location. The JSON export identifies the selected run."),
         ("experiment-bench", "Application: Experiment Bench", "This live 200-patch run fits K=3 with 95% PCA and t-SNE perplexity 30. Both plots share patch IDs and K-Means colours. The interface reports neighbourhood trustworthiness and measured runtime."),
         ("reference-audit", "Application: Reference Audit", "The separate audit compares the frozen groups with the EuroSAT categories. Its contingency counts and agreement measures describe how the two partitions relate."),
     ]

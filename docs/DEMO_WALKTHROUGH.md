@@ -62,7 +62,7 @@ If the hosted app is asleep, use the working local copy. If a live experiment is
 
 ## Honest answers to difficult questions
 
-- “Why is the best K not ten?” Because the selection did not use labels; broad visual similarity and semantic categories can differ.
+- “Why did you choose K=2 when EuroSAT has ten labels?” In the same standardized feature space, K=2 had a study silhouette of 0.239 versus 0.156 for K=10. When we opened the labels for a separate check, K=10 matched the reference categories more closely, but majority-naming those groups achieved only 52.65% on the holdout. The two measures answer different questions. See the [verification record](VERIFICATION.md).
 - “Why not add a CNN?” Pretrained embeddings could improve semantic representation, but they add training provenance and reduce the simplicity of an interpretable primary study. They are future work, not an implemented result.
 - “Why not a map?” The application explores anonymous patches and does not claim location reconstruction or use a geospatial split. A decorative world map would not add evidence.
 - “What did each person do?” Describe the work you personally completed and use your rehearsal notes, checks or examples as evidence.

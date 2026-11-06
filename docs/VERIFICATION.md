@@ -27,3 +27,22 @@ The live job `live-a5de07cf753040e5` returned 200 distinct patch IDs with paired
 The release also retains the reference study's prior checks. All six original workspaces were exercised at 320, 375, 414 and 768 px. Projection settings, the K=10 atlas inspection, keyboard dismissal, skip navigation and the post-selection audit were verified in the browser.
 
 Current application screenshots are in `docs/screenshots/`. Reference evidence remains in `artifacts/study.json` and `artifacts/audit.json`.
+
+## End-to-end recheck
+
+- A clean extraction of the review ZIP installed from the lockfiles, built the frontend, passed all 26 tests and launched with the documented commands. The extracted app analysed both included holdout images.
+- In the deployed browser, all six workspaces rendered and fit a 375 px viewport. The checks covered the reference patch inspector, a change to a saved t-SNE setting, the K=10 atlas, the separate audit, both uploads and the downloaded analysis JSON. One Projection Lab transition in an already-open tab stayed on its loading view until a reload. Subsequent navigation checks passed.
+- Render rejected an invalid JPEG and a 501-patch t-SNE request with HTTP 422. Fresh job `live-94fcb2d1735b48a2` completed with 200 paired points, 22 retained components, 95.34% explained variance and 0.9408 t-SNE trustworthiness. Its API export matched the polled result. Its plots and JSON download also worked through the browser.
+- The review ZIP contained the required code, fitted artifacts, examples, links, report and presentation. Final packaging correctly flagged the three pending contribution entries.
+
+## Why ten groups still do not identify ten land types
+
+| Holdout measure | K=2 reference | K=10 comparison |
+| --- | --- | --- |
+| Silhouette in the common standardized descriptor space | 0.243 | 0.157 |
+| Adjusted Rand index against EuroSAT labels | 0.106 | 0.322 |
+| Normalized mutual information against EuroSAT labels | 0.221 | 0.442 |
+
+For this follow-up audit, the original split IDs were matched to the full descriptor cache. The frozen imputer, scaler and first 28 PCA components transformed the study and holdout rows. The comparison used `KMeans(n_clusters=10, n_init=10, random_state=42)` on study rows only. Its inertia matched the recorded run within floating-point tolerance. Reference labels were loaded only after fitting and generating both sets of holdout assignments. The common-space silhouette values are from the stored study comparison. The external agreement values use all 5,400 holdout rows.
+
+The K=10 groups show higher agreement with the reference labels and weaker geometric separation in the common descriptor space. Assigning each K=10 group its most common **study** label gave 52.65% accuracy and 0.442 macro F1 on the holdout. This simple mapping predicted eight categories and missed Highway and Pasture entirely. One river-leading group contained 379 River patches among 1,205 holdout members. The mapping is an offline diagnostic only. The deployed analyzer returns the frozen visual group and presents reference category proportions separately.

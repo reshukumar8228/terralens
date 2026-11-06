@@ -1,0 +1,16 @@
+.experiment-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.live-projection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.live-projection-grid > section { min-width: 0; }
+.live-projection-grid h3 { margin: 0 0 .5rem; }

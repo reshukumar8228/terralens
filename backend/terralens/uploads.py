@@ -84,7 +84,7 @@ def analyze_upload(raw: bytes, artifacts_dir: Path) -> dict:
         raise
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError, Image.DecompressionBombWarning):
         raise HTTPException(422, "The file could not be decoded as a safe image.") from None
-    from terralens.pipeline import analyze_image
+    from terralens.inference import analyze_image
     result = analyze_image(image, artifacts_dir)
     result["warnings"] = notices + result.get("warnings", [])
     result["input_size"] = [width, height]

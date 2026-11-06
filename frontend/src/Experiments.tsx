@@ -1,54 +1,140 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowClockwise, CheckCircle, DownloadSimple, Flask, Play, WarningCircle } from '@phosphor-icons/react';
-import { downloadJson, fixed, format, percent, request } from './api';
-import { MetricLine, Scatter } from './Charts';
-import { MetricsRow, Notice, PageTitle, Panel } from './UI';
+import { useEffect, useState } from 'react';
+import { ArrowClockwise, DownloadSimple, Flask } from '@phosphor-icons/react';
+import { format, percent, request } from './api';
+import { Notice, PageTitle, Panel } from './UI';
+import ExperimentControls from './experiments/ExperimentControls';
+import ExperimentOutput from './experiments/ExperimentOutput';
+import RecordedComparisons from './experiments/RecordedComparisons';
 import type { Capabilities, Experiment, ExperimentConfig, PatchContext, Run, Study } from './types';
+import './experiments/experiments.css';
 
-export default function Experiments({ study, run, capabilities, selectPatch }: { study: Study; run: Run; capabilities: Capabilities; selectPatch: (id: string, context?: PatchContext) => void }) {
+interface Props {
+  study: Study;
+  run: Run;
+  capabilities: Capabilities;
+  selectPatch: (id: string, context?: PatchContext) => void;
+}
+
+type AcceptedJob = Pick<Experiment, 'id' | 'status'>;
+
+export default function Experiments({ study, run, capabilities, selectPatch }: Props) {
   const maximum = capabilities.max_experiment_samples;
-  const [config, setConfig] = useState<ExperimentConfig>({ k: run.k, variance: run.variance || .95, seed: study.split.seed, sample_size: Math.min(1000, maximum) });
+  const tsneMaximum = capabilities.live_tsne ? capabilities.max_live_tsne_samples : undefined;
+  const [config, setConfig] = useState<ExperimentConfig>({
+    k: run.k, variance: run.variance ?? 0.95, seed: study.split.seed, sample_size: Math.min(1000, maximum),
+  });
   const [job, setJob] = useState<Experiment | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [activity, setActivity] = useState<'submit' | 'history' | null>(null);
   const [error, setError] = useState('');
   const [history, setHistory] = useState<Experiment[]>([]);
-  const [comparisonVariance, setComparisonVariance] = useState(run.variance || .95);
-  const [highlightRunId, setHighlightRunId] = useState(run.id);
-  const busy = submitting || job?.status === 'queued' || job?.status === 'running';
-  const comparisonRuns = useMemo(() => (study.experiments.screening || study.runs).filter(r => r.variance === comparisonVariance), [study.runs, study.experiments.screening, comparisonVariance]);
-  const chartRuns = useMemo(() => {
-    const map = new Map<number, { k: number; seed: number; metrics: Run['metrics'] }>();
-    for (const r of comparisonRuns) if (!map.has(r.k) || r.seed === study.split.seed) map.set(r.k, r);
-    return [...map.values()].sort((a, b) => a.k - b.k);
-  }, [comparisonRuns, study.split.seed]);
-  const highlight = study.runs.find(r => r.id === highlightRunId) || run;
-  useEffect(() => { const controller = new AbortController(); request<{ experiments: Experiment[] }>('/experiments', { signal: controller.signal }).then(data => setHistory(data.experiments)).catch(() => {}); return () => controller.abort(); }, []);
+  const activeJobId = job?.status === 'queued' || job?.status === 'running' ? job.id : null;
+  const busy = Boolean(activity || activeJobId);
+
   useEffect(() => {
-    if (!job || (job.status !== 'running' && job.status !== 'queued')) return;
-    let cancelled = false; let timer: ReturnType<typeof setTimeout>;
-    const poll = async () => {
-      try { const updated = await request<Experiment>(`/experiments/${job.id}`); if (cancelled) return; setJob(updated); if (updated.status === 'completed' || updated.status === 'failed') setHistory(h => [updated, ...h.filter(j => j.id !== updated.id)].slice(0, 12)); else timer = setTimeout(poll, 1000); }
-      catch (e) { if (!cancelled) { setError((e as Error).message); setJob(j => j ? { ...j, status: 'failed', error: 'Connection interrupted. Refresh the history to check the saved job.' } : null); } }
-    };
-    timer = setTimeout(poll, 700); return () => { cancelled = true; clearTimeout(timer); };
-  }, [job?.id, job?.status]);
+    const controller = new AbortController();
+    request<{ experiments: Experiment[] }>('/experiments', { signal: controller.signal })
+      .then(data => setHistory(data.experiments))
+      .catch(cause => { if (!controller.signal.aborted) setError((cause as Error).message); });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (!activeJobId) return;
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+
+    async function poll() {
+      try {
+        const updated = await request<Experiment>(`/experiments/${activeJobId}`, { signal: controller.signal });
+        if (controller.signal.aborted) return;
+        setJob(updated);
+        if (updated.status === 'completed' || updated.status === 'failed') {
+          setHistory(items => [updated, ...items.filter(item => item.id !== updated.id)].slice(0, 50));
+        } else {
+          timer = setTimeout(poll, 1000);
+        }
+      } catch (cause) {
+        if (!controller.signal.aborted) {
+          setError((cause as Error).message);
+          setJob(current => current && {
+            ...current, status: 'failed', error: 'Connection interrupted. Check the saved job in Recent live runs.',
+          });
+        }
+      }
+    }
+
+    timer = setTimeout(poll, 700);
+    return () => { controller.abort(); clearTimeout(timer); };
+  }, [activeJobId]);
+
   async function startExperiment() {
-    setError(''); setSubmitting(true);
-    try { const created = await request<Experiment>('/experiments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) }); setJob({ ...created, config: created.config || config }); }
-    catch (e) { setError((e as Error).message); } finally { setSubmitting(false); }
+    if (busy) return;
+    setError('');
+    setActivity('submit');
+    try {
+      const created = await request<AcceptedJob>('/experiments', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config),
+      });
+      setJob({ ...created, config });
+    } catch (cause) {
+      setError((cause as Error).message);
+    } finally {
+      setActivity(null);
+    }
   }
-  async function refreshHistory() { try { const data = await request<{ experiments: Experiment[] }>('/experiments'); setHistory(data.experiments); } catch (e) { setError((e as Error).message); } }
-  async function openHistory(id: string) { try { setJob(await request<Experiment>(`/experiments/${id}`)); } catch (e) { setError((e as Error).message); } }
-  return <>
-    <PageTitle title="Experiment bench" text="Change one decision. Measure what follows."><a className="button button-outline" href="/api/export/metrics.csv" download><DownloadSimple size={17}/>Metrics CSV</a></PageTitle>
-    <div className="experiment-grid"><Panel title="Run a live experiment" detail="K-Means on PCA-reduced, label-blind features." className="experiment-controls"><div className="control-field"><label htmlFor="clusters-k">Number of groups <output>{config.k}</output></label><input id="clusters-k" type="range" min="2" max="15" value={config.k} disabled={!!busy} onChange={e => setConfig(c => ({ ...c, k: +e.target.value }))}/><div className="range-labels"><span>2 groups</span><span>15 groups</span></div></div><div className="control-field"><label htmlFor="variance">PCA retained variance</label><select id="variance" value={config.variance} disabled={!!busy} onChange={e => setConfig(c => ({ ...c, variance: +e.target.value }))}><option value="0.9">90% · greater compression</option><option value="0.95">95% · balanced retention</option><option value="0.99">99% · more dimensions</option></select></div><div className="paired-controls"><div className="control-field"><label htmlFor="seed">Random seed</label><input id="seed" type="number" min="0" max="9999" value={config.seed} disabled={!!busy} onChange={e => setConfig(c => ({ ...c, seed: Math.max(0, Math.min(9999, Number(e.target.value))) }))}/></div><div className="control-field"><label htmlFor="sample-size">Sample size</label><select id="sample-size" value={config.sample_size} disabled={!!busy} onChange={e => setConfig(c => ({ ...c, sample_size: +e.target.value }))}>{[200, 500, 1000, 2000, 3000].filter(n => n <= maximum).map(n => <option value={n} key={n}>{format(n, 0)} patches</option>)}</select></div></div><button className="button button-primary run-button" onClick={startExperiment} disabled={!!busy}>{busy ? <><span className="loading-dots"/>Computing experiment</> : <><Play size={17} weight="fill"/>Run experiment</>}</button><p className="caption">This creates a new measured run. The frozen reference study remains available for comparison.</p>{error ? <Notice warning>{error}</Notice> : null}<div className="experiment-capability"><ShieldIcon/><span>Labels excluded from model fitting</span></div></Panel>
-    <Panel title="The experiment notebook" detail={job ? `Run ${job.id.slice(0, 12)}` : 'Your next question starts here.'} className="experiment-result">
-      {!job ? <div className="experiment-empty"><Flask size={44} weight="duotone"/><h3>Make room for a question.</h3><p>Would fewer groups reveal a clearer structure?<br/>Does keeping more variance change the result?</p><span>Set your parameters, then run an experiment.</span></div> : job.status === 'queued' || job.status === 'running' ? <div className="job-progress" role="status"><div className="job-progress-icon"><Flask size={34}/></div><h3>{job.status === 'queued' ? 'Your experiment is queued.' : 'Following the evidence.'}</h3><p>{job.stage || 'Preparing features and fitting the model…'}</p><div className="progress-track"><span/></div><span className="caption">Actual processing state · no estimated percentage</span></div> : job.status === 'failed' ? <div className="empty-state"><WarningCircle size={34}/><h3>The experiment could not finish.</h3><p>{job.error || 'Try a smaller sample or run the experiment again.'}</p><button className="button button-outline" onClick={startExperiment}>Try again</button></div> : job.result ? <><div className="result-summary"><span className="success-label"><CheckCircle size={17}/>Measured run completed</span><button className="text-button" onClick={() => downloadJson(job, `terralens-${job.id}.json`)}><DownloadSimple size={15}/>Export run</button></div><MetricsRow metrics={job.result.metrics} compact/><Scatter points={job.result.points || []} projection="pca" compact onSelect={id => { const point = job.result?.points.find(p => p.id === id); if (job.result && point) selectPatch(id, { runId: job.result.id, run: job.result, point, clusterId: point.cluster, source: 'live' }); }}/><div className="plot-metadata"><span><strong>{job.result.components}</strong> PCA dimensions</span><span><strong>{format(job.result.runtime_seconds, 2)} s</strong> measured runtime</span></div></> : <Notice>The completed run has no result payload.</Notice>}
-    </Panel></div>
-    <Notice>Live experiments use at most {format(maximum, 0)} patches. t-SNE configurations are recorded research runs. Cluster IDs are arbitrary and may change between fits.</Notice>
-    <div className="comparison-grid"><Panel title="How many groups?" detail={`Fixed screening cohort · ${format(study.experiments.screening_sample_size, 0)} patches`} action={<select aria-label="PCA variance for silhouette chart" value={comparisonVariance} onChange={e => setComparisonVariance(+e.target.value)}><option value="0.9">PCA 90%</option><option value="0.95">PCA 95%</option><option value="0.99">PCA 99%</option></select>}><MetricLine data={chartRuns.map(r => ({ k: r.k, value: r.metrics.silhouette_original }))} selectedK={run.k}/><div className="chart-axis-caption">Number of groups (K) · silhouette in the common standardised feature space</div></Panel><Panel title="Why this reference run?" detail="Model selection must survive more than a pretty picture."><div className="reference-model"><span>K = {run.k}</span><strong>{run.components} PCA components</strong><p>{run.selection_reason || study.provenance.selection_rule}</p></div><div className="selection-facts"><div><span>Common-space silhouette</span><code>{format(run.metrics.silhouette_original)}</code></div><div><span>Seed stability (ARI)</span><code>{fixed(run.stability)}</code></div><div><span>Random seed</span><code>{run.seed}</code></div></div></Panel></div>
-    <Panel title="Recorded study comparisons" detail="Common-space silhouette uses the same standardised features and evaluation sample. Select a run to inspect its own-space metrics." action={<a className="text-button" href="/api/export/config.json" download><DownloadSimple size={15}/>Configuration</a>}><div className="table-wrap"><table className="research-table"><thead><tr><th>Configuration</th><th>Groups</th><th>Dimensions</th><th>Common-space silhouette ↑</th><th>DB index ↓</th><th>Runtime</th><th></th></tr></thead><tbody>{study.runs.map(r => <tr key={r.id} className={highlight.id === r.id ? 'selected-row' : ''}><td data-label="Configuration"><span className="configuration-name">{r.variance == null ? 'Without PCA' : `PCA ${percent(r.variance, 0)}`}{r.id === run.id ? <span className="table-tag">Reference</span> : null}</span><small>seed {r.seed}</small></td><td data-label="Groups">{r.k}</td><td data-label="Dimensions">{r.components}</td><td data-label="Common-space silhouette">{format(r.metrics.silhouette_original)}</td><td data-label="DB index">{format(r.metrics.davies_bouldin)}</td><td data-label="Runtime">{format(r.runtime_seconds, 2)} s</td><td><button className="text-button" onClick={() => setHighlightRunId(r.id)} aria-label={`Inspect recorded run ${r.id}`}>{highlight.id === r.id ? 'Selected' : 'Inspect'}</button></td></tr>)}</tbody></table></div><div className="selected-run-summary"><span>{highlight.id}</span><MetricsRow metrics={highlight.metrics} stability={highlight.stability} compact/></div></Panel>
-    <Panel title="Recent live runs" detail="Anonymous runs on this service, separate from the frozen reference." action={<button className="text-button" onClick={refreshHistory}><ArrowClockwise size={15}/>Refresh</button>}>{history.length ? <div className="session-runs">{history.map(item => <button key={item.id} onClick={() => { void openHistory(item.id); }} className="session-run"><Flask size={20}/><span><strong>K {item.config?.k} · PCA {percent(item.config?.variance, 0)}</strong><small>{item.id.slice(0, 16)} · {format(item.config?.sample_size, 0)} patches</small></span><span className={`job-status status-${item.status}`}>{item.status}</span></button>)}</div> : <p className="empty-inline">Recent experiments on this service will appear here.</p>}<p className="panel-footnote">{capabilities.storage}</p></Panel>
-  </>;
+
+  async function refreshHistory() {
+    try {
+      const data = await request<{ experiments: Experiment[] }>('/experiments');
+      setHistory(data.experiments);
+    } catch (cause) { setError((cause as Error).message); }
+  }
+
+  async function openHistory(id: string) {
+    if (busy) return;
+    setError('');
+    setActivity('history');
+    try { setJob(await request<Experiment>(`/experiments/${id}`)); }
+    catch (cause) { setError((cause as Error).message); }
+    finally { setActivity(null); }
+  }
+
+  return (
+    <>
+      <PageTitle title="Experiment bench" text="Change the settings and measure what happens to the same sample.">
+        <a className="button button-outline" href="/api/export/metrics.csv" download><DownloadSimple size={17}/>Metrics CSV</a>
+      </PageTitle>
+      <div className="experiment-grid">
+        <ExperimentControls config={config} onChange={setConfig} onSubmit={() => { void startExperiment(); }}
+          maximum={maximum} tsneMaximum={tsneMaximum} busy={busy} error={error}/>
+        <ExperimentOutput job={job} selectPatch={selectPatch}/>
+      </div>
+      <Notice>
+        Live PCA and K-Means runs use up to {format(maximum, 0)} patches on this host.
+        {tsneMaximum && ` Live t-SNE is available for up to ${format(tsneMaximum, 0)} patches.`}
+        {' '}Cluster IDs can change between fits.
+      </Notice>
+      <RecordedComparisons study={study} reference={run}/>
+      <Panel title="Recent live runs" detail="Anonymous runs on this service, separate from the frozen reference."
+        action={<button className="text-button" onClick={() => { void refreshHistory(); }}><ArrowClockwise size={15}/>Refresh</button>}>
+        {history.length ? (
+          <div className="session-runs">
+            {history.map(item => (
+              <button key={item.id} disabled={busy} onClick={() => { void openHistory(item.id); }} className="session-run">
+                <Flask size={20}/>
+                <span>
+                  <strong>K {item.config.k} · PCA {percent(item.config.variance, 0)}
+                    {item.config.tsne_perplexity && ` · t-SNE ${item.config.tsne_perplexity}`}
+                  </strong>
+                  <small>{item.id.slice(0, 16)} · {format(item.config.sample_size, 0)} patches</small>
+                </span>
+                <span className={`job-status status-${item.status}`}>{item.status}</span>
+              </button>
+            ))}
+          </div>
+        ) : <p className="empty-inline">Recent experiments on this service will appear here.</p>}
+        <p className="panel-footnote">{capabilities.storage}</p>
+      </Panel>
+    </>
+  );
 }
-function ShieldIcon() { return <CheckCircle size={16}/>; }

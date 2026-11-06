@@ -22,13 +22,13 @@ export const Scatter = memo(function Scatter({ points, coordinates, projection, 
   const height = compact ? 280 : 390;
   const xy = useMemo(() => coordinates || points.map(p => p[projection]), [coordinates, points, projection]);
   const bounds = useMemo(() => {
-    const valid = xy.filter(p => p && Number.isFinite(p[0]) && Number.isFinite(p[1]));
+    const valid = [...xy, marker].filter((p): p is XY => !!p && Number.isFinite(p[0]) && Number.isFinite(p[1]));
     if (!valid.length) return { minX: -1, maxX: 1, minY: -1, maxY: 1 };
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const [x, y] of valid) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
     const padX = (maxX - minX || 1) * .08, padY = (maxY - minY || 1) * .09;
     return { minX: minX - padX, maxX: maxX + padX, minY: minY - padY, maxY: maxY + padY };
-  }, [xy]);
+  }, [xy, marker]);
   useEffect(() => {
     if (!wrapRef.current) return;
     const observer = new ResizeObserver(entries => setWidth(Math.max(200, entries[0].contentRect.width)));

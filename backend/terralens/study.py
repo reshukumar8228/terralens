@@ -28,8 +28,8 @@ from sklearn.metrics import adjusted_rand_score, completeness_score, homogeneity
 from sklearn.preprocessing import StandardScaler
 from threadpoolctl import threadpool_limits
 
+from .clustering import calculate_metrics, cluster_summaries
 from .features import FEATURES, FEATURE_FAMILIES, FEATURE_NAMES, extract_features
-from .pipeline import calculate_metrics, cluster_summaries
 
 SOURCE_URL = "https://zenodo.org/records/7711810"
 ARCHIVE_URL = "https://zenodo.org/api/records/7711810/files/EuroSAT_RGB.zip/content"

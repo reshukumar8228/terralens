@@ -1,7 +1,7 @@
 export type View = 'observatory' | 'projections' | 'clusters' | 'experiments' | 'analyzer' | 'evidence';
 export interface PatchContext { runId: string; clusterId?: number; run?: Run; point?: Point; source?: 'live' }
 export type XY = [number, number];
-export interface Point { id: string; pca: XY; tsne: XY; cluster: number }
+export interface Point { id: string; pca: XY; tsne?: XY; cluster: number }
 export interface Feature { name: string; value: number; zscore: number }
 export interface Metrics {
   silhouette: number | null;
@@ -42,8 +42,50 @@ export interface Study {
   limitations: string[];
   provenance: { created_at: string; seed: number; versions: Record<string, string>; selection_rule: string; metric_space: string; visual_sample_size: number; notes: string[] };
 }
-export interface Capabilities { max_experiment_samples: number; live_tsne: boolean; upload_max_bytes: number; storage: string; reference_run_id: string }
-export interface ExperimentConfig { k: number; variance: number; seed: number; sample_size: number }
-export interface Experiment { id: string; status: 'queued' | 'running' | 'completed' | 'failed'; stage?: string; config: ExperimentConfig; result?: Run & { points: Point[] }; error?: string; created_at?: string }
-export interface Analysis { cluster: number; pca: XY; distance: number; relative_distance: number; reference_percentile: number; representatives: string[]; features: Feature[]; warnings: string[] }
+export interface Capabilities {
+  max_experiment_samples: number;
+  max_live_tsne_samples?: number;
+  live_tsne: boolean;
+  upload_max_bytes: number;
+  storage: string;
+  reference_run_id: string;
+}
+export type LivePerplexity = 10 | 30 | 50;
+export interface ExperimentConfig {
+  k: number;
+  variance: number;
+  seed: number;
+  sample_size: number;
+  tsne_perplexity?: LivePerplexity | null;
+}
+export interface ExperimentResult extends Run {
+  points: Point[];
+  tsne?: { perplexity: number; trustworthiness: number; runtime_seconds: number } | null;
+}
+export interface Experiment {
+  id: string;
+  status: 'queued' | 'running' | 'completed' | 'failed';
+  stage?: string;
+  config: ExperimentConfig;
+  result?: ExperimentResult;
+  error?: string;
+  created_at?: string;
+}
+export interface Analysis {
+  run_id?: string;
+  cluster: number;
+  cluster_description?: string;
+  pca: XY;
+  distance: number;
+  relative_distance: number | null;
+  reference_percentile: number;
+  alternate_cluster?: number | null;
+  alternate_distance?: number | null;
+  margin?: number | null;
+  neighbors?: { id: string; distance: number }[];
+  neighbor_scope?: number;
+  representatives: string[];
+  features: Feature[];
+  warnings: string[];
+}
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };

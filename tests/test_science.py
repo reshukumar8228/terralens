@@ -13,8 +13,9 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
+from terralens.experiments import run_experiment
 from terralens.features import FEATURES, FEATURE_FAMILIES, FEATURE_NAMES, extract_features
-from terralens.pipeline import analyze_image, load_model, run_experiment
+from terralens.inference import analyze_image, load_model
 
 ARTIFACTS = Path(__file__).resolve().parents[1] / "artifacts"
 

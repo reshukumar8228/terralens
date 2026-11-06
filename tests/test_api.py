@@ -11,8 +11,10 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from terralens import app as app_module
+from terralens.settings import MAX_UPLOAD_ENVELOPE
 from terralens.store import ExperimentStore
 
 
@@ -106,21 +108,21 @@ def test_chunked_upload_is_bounded_before_multipart_parsing(client):
     }
     asyncio.run(asyncio.wait_for(app_module.app(scope, receive, send), timeout=10))
     assert next(message for message in messages if message["type"] == "http.response.start")["status"] == 413
-    assert consumed <= app_module.MAX_UPLOAD + 256 * 1024 + 65536
+    assert consumed <= MAX_UPLOAD_ENVELOPE + 65536
 
 
 def test_image_decode_does_not_block_health_requests(prepared, monkeypatch):
     patch_id = prepared.get("/api/study").json()["points"][0]["id"]
     content = prepared.get(f"/api/patches/{patch_id}.jpg").content
     decode_started = threading.Event()
-    real_open = app_module.Image.open
+    real_open = Image.open
 
     def slow_open(*args, **kwargs):
         decode_started.set()
         time.sleep(0.8)
         return real_open(*args, **kwargs)
 
-    monkeypatch.setattr(app_module.Image, "open", slow_open)
+    monkeypatch.setattr(Image, "open", slow_open)
     with ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(prepared.post, "/api/analyze", files={"file": ("patch.jpg", content, "image/jpeg")})
         assert decode_started.wait(timeout=5)
@@ -146,10 +148,19 @@ def test_reference_upload_uses_saved_pipeline(prepared):
     assert 0 <= result["reference_percentile"] <= 100
     assert len(result["features"]) == len(study["feature_names"])
     assert "not retained" in result["retention"]
+    assert result["run_id"] == study["selected_run_id"]
+    assert result["alternate_cluster"] != result["cluster"]
+    assert result["margin"] == pytest.approx(result["alternate_distance"] - result["distance"])
+    assert result["neighbor_scope"] >= len(result["neighbors"]) > 0
+    assert first.headers["cache-control"] == "no-store"
 
 
-def test_live_experiment_reaches_a_real_result(prepared):
-    created = prepared.post("/api/experiments", json={"k": 3, "variance": 0.95, "seed": 19, "sample_size": 200})
+@pytest.mark.parametrize("perplexity", [None, 30])
+def test_live_experiment_reaches_a_real_result(prepared, perplexity):
+    config = {"k": 3, "variance": 0.95, "seed": 19, "sample_size": 200}
+    if perplexity is not None:
+        config["tsne_perplexity"] = perplexity
+    created = prepared.post("/api/experiments", json=config)
     assert created.status_code == 202
     experiment_id = created.json()["id"]
     deadline = time.monotonic() + 40
@@ -162,7 +173,22 @@ def test_live_experiment_reaches_a_real_result(prepared):
     assert len(job["result"]["points"]) == 200
     assert len(set(point["cluster"] for point in job["result"]["points"])) == 3
     assert job["result"]["metrics"]["silhouette"] is not None
+    if perplexity is not None:
+        assert job["result"]["tsne"]["perplexity"] == perplexity
+        assert 0 <= job["result"]["tsne"]["trustworthiness"] <= 1
+        assert all(len(point["tsne"]) == 2 for point in job["result"]["points"])
+    else:
+        assert "tsne" not in job["result"]
     assert prepared.get(f"/api/export/experiments/{experiment_id}.json").json()["result"] == job["result"]
+
+
+def test_live_tsne_respects_advertised_sample_limit(client):
+    capabilities = client.get("/api/capabilities").json()
+    assert capabilities["live_tsne"] is True
+    maximum = capabilities["max_live_tsne_samples"]
+    rejected = client.post("/api/experiments", json={"sample_size": maximum + 1, "tsne_perplexity": 30})
+    assert rejected.status_code == 422
+    assert str(maximum) in rejected.json()["detail"]
 
 
 def test_restart_marks_incomplete_job_as_interrupted(tmp_path):

@@ -1,0 +1,52 @@
+.upload-replace { margin-inline-start: auto; }
+.uploaded-file > span { flex: 1; }
+.assignment-heading h3 { font-size: var(--text-xl); }
+.assignment-description { font-size: var(--text-sm); color: var(--color-muted); margin-top: var(--space-xs); }
+.centroid-evidence {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--space-md);
+  margin: var(--space-md) 0 0;
+}
+.centroid-evidence > div { border-inline-start: 1px solid var(--color-rule); padding-inline-start: var(--space-md); }
+.centroid-evidence dt,
+.centroid-evidence small { font-size: var(--text-xs); color: var(--color-muted); }
+.centroid-evidence dd {
+  margin: var(--space-xs) 0 0;
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+.analyzer-percentile { margin-top: var(--space-sm); font-size: var(--text-xs); }
+.nearest-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin: var(--space-md) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.nearest-gallery > li > span {
+  display: block;
+  margin-top: var(--space-xs);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+.nearest-gallery strong { color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.category-audit { border-top: 1px solid var(--color-rule); margin-top: var(--space-lg); padding-top: var(--space-sm); }
+.category-audit-toggle { white-space: normal; text-align: start; min-height: 36px; }
+.category-counts { display: grid; gap: var(--space-sm); padding: 0; margin: var(--space-md) 0 0; list-style: none; }
+.category-counts li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-xs) var(--space-sm); font-size: var(--text-xs); }
+.category-counts li > span:first-child { overflow-wrap: anywhere; }
+.category-count { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.category-count small { font-size: inherit; color: var(--color-muted); }
+.category-bar { grid-column: 1 / -1; height: 4px; background: var(--color-paper-2); }
+.category-bar > span { display: block; height: 100%; background: var(--color-accent); }
+
+@media (max-width: 400px) {
+  .nearest-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .uploaded-file { flex-wrap: wrap; }
+  .upload-replace { margin-inline-start: 0; }
+}

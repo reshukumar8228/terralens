@@ -14,7 +14,18 @@ const BUILD = path.join(ROOT, ".build", "deliverables");
 const OUT = path.join(ROOT, "output", "presentation");
 const MODULES = process.env.RUNTIME_NODE_MODULES || process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES || path.join(os.homedir(), ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules");
 const RUNTIME = path.dirname(path.dirname(MODULES));
-const SKILL = process.env.PRESENTATIONS_SKILL_DIR || path.join(os.homedir(), ".codex/plugins/cache/openai-primary-runtime/presentations/26.1030.10813/skills/presentations");
+async function resolvePresentationSkill() {
+  if (process.env.PRESENTATIONS_SKILL_DIR) return process.env.PRESENTATIONS_SKILL_DIR;
+  const cache = path.join(os.homedir(), ".codex/plugins/cache/openai-primary-runtime/presentations");
+  const versions = await fs.readdir(cache, { withFileTypes: true });
+  for (const version of versions.filter(item => item.isDirectory()).sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true}))) {
+    const skill = path.join(cache, version.name, "skills", "presentations");
+    const validator = path.join(skill, "container_tools", "artifact_tool_utils.mjs");
+    if (await fs.stat(validator).then(item => item.isFile(), () => false)) return skill;
+  }
+  throw new Error("Set PRESENTATIONS_SKILL_DIR to the installed Codex presentation skill directory.");
+}
+const SKILL = await resolvePresentationSkill();
 process.env.RUNTIME_NODE_MODULES = MODULES;
 const { Presentation, PresentationFile } = await import(pathToFileURL(path.join(MODULES, "@oai/artifact-tool/dist/artifact_tool.mjs")));
 const { finalizePresentation, applyPresentationChartFont } = await import(pathToFileURL(path.join(SKILL, "container_tools/artifact_tool_utils.mjs")));
@@ -153,8 +164,7 @@ await fs.mkdir(BUILD,{recursive:true}); await fs.mkdir(OUT,{recursive:true});
 }
 // 08 - real results/testing
 {
-  const verify=JSON.parse(await fs.readFile(path.join(ROOT,"artifacts/verification.json"),"utf8").catch(()=>"{}"));
-  const q=slide("Measured results and interpretation",`25 seconds. Read the main distinction: study retained-space silhouette ${n(r.metrics.silhouette)}, heldout ${n(r.holdout_metrics?.silhouette)}, mean seed ARI ${n(r.stability)}, but external study ARI only ${n(a.metrics?.adjusted_rand_index)} and NMI ${n(a.metrics?.normalized_mutual_information)}. The model is stable but coarse, not a ten-class land classifier. Internal and external metrics answer different questions. Verification record at generation: ${JSON.stringify(verify)}. Sources: actual study and separate audit artifacts.`);
+  const q=slide("Measured results and interpretation",`25 seconds. The study retained-space silhouette is ${n(r.metrics.silhouette)} and the holdout silhouette is ${n(r.holdout_metrics?.silhouette)}. Mean seed ARI is ${n(r.stability,4)}. Agreement with EuroSAT labels is lower: study ARI is ${n(a.metrics?.adjusted_rand_index)} and NMI is ${n(a.metrics?.normalized_mutual_information)}. Explain why a reproducible visual partition can group several land categories together. Sources: artifacts/study.json and artifacts/audit.json.`);
   tab(q,[["Evidence","Recorded value","Meaning"],["Study / holdout silhouette",`${n(r.metrics.silhouette)} / ${n(r.holdout_metrics?.silhouette)}`,"Retained-space geometry"],["Seed stability ARI",n(r.stability,4),"Consistent broad split"],["Post-selection ARI / NMI",`${n(a.metrics?.adjusted_rand_index)} / ${n(a.metrics?.normalized_mutual_information)}`,"Limited class agreement"]],64,170,1152,300,[380,280,492],24);
   tx(q,"Finding: strong consistency does not establish semantic correctness",64,515,1152,90,32,{bold:true});
   tx(q,"Checks cover numerical invariants, invalid uploads, API exports and the interface build",64,612,1152,35,22,{color:MUTED});
@@ -181,9 +191,17 @@ await fs.mkdir(BUILD,{recursive:true}); await fs.mkdir(OUT,{recursive:true});
 }
 // 12 - contributions/references and honest AI disclosure
 {
-  const q=slide("Team responsibilities and references",`20 seconds. The roles shown are proposed preparation responsibilities, not an invented record of completed work. Before submission each member must record actual work in team.json and be able to explain the whole system. Codex assisted implementation and document drafting. Primary references are EuroSAT creators/paper, scikit-learn documentation and the course syllabus. End the main talk here at approximately4minutes; appendix is for questions. Source links: https://github.com/phelber/EuroSAT; https://arxiv.org/abs/1709.00029; https://scikit-learn.org/stable/modules/clustering.html; https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html; https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html.`);
-  tab(q,[["Member / registration","Proposed responsibility"],...members.map(m=>[`${m.name} / ${m.registration_number}`,m.responsibility||"Confirm actual responsibilities before submission"])],64,155,1152,250,[560,592],23);
-  tx(q,"Actual completed work must be verified before submission.\nCodex assisted implementation and drafting; the team owns verification and explanation.",64,435,1152,80,24,{color:MUTED});
+  const allCompleted = members.every(member => member.completed_work?.trim());
+  const q=slide("Team responsibilities and references",`20 seconds. ${allCompleted ? "Summarise each member's recorded work." : "Describe the assigned responsibilities. Record each member's actual contribution once they complete it."} Codex assisted implementation and drafting. End the main talk here at about four minutes. Use the appendix for questions. Sources: https://github.com/phelber/EuroSAT, https://arxiv.org/abs/1709.00029, https://scikit-learn.org/stable/modules/clustering.html, https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html, https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html.`);
+  const workRows = members.map(member => {
+    const completed = member.completed_work?.trim();
+    const description = completed || member.responsibility || "Confirm responsibilities before submission";
+    const status = completed ? "Completed" : "Assigned";
+    return [`${member.name} / ${member.registration_number}`, allCompleted ? description : `${status}: ${description}`];
+  });
+  tab(q,[["Member / registration",allCompleted ? "Completed work" : "Responsibility and status"],...workRows],64,155,1152,250,[560,592],23);
+  const assistance = "Codex assisted implementation and drafting. The team verifies and explains the work.";
+  tx(q,allCompleted ? assistance : `Completion records are pending. Update them before submission.\n${assistance}`,64,435,1152,80,24,{color:MUTED});
   tx(q,"References: EuroSAT creators and paper · scikit-learn PCA/t-SNE/clustering · INT396 syllabus",64,565,1152,80,23);
 }
 // 13 - appendix: editable system diagram
@@ -213,8 +231,8 @@ await fs.mkdir(BUILD,{recursive:true}); await fs.mkdir(OUT,{recursive:true});
 }
 // 16 - appendix: reproduction and final checks
 {
-  const q=slide("Reproduction and final submission",`Appendix. Follow README for compact demonstration and full download/study reproduction. Verify the archive checksum and recorded versions. Regenerate report/slides after scientific or identity changes. The teacher's two ZIP naming conventions conflict; confirm the final one. All members submit the same contents individually. A public deployment is claimed only after its URL is populated and tested. Repository: ${links.github||"not populated"}. Deployment: ${links.deployment||"not populated"}. Actual completed contributions remain required.`,{appendix:true});
-  lines(q,["Download and verify archive → run recorded study → inspect artifacts","Run application and checks → capture screens → regenerate documents","Fill actual contributions and verify GitHub / deployment URLs","Package clean source, report, slides, README and PROJECT_LINKS.txt"],64,165,1152,27,95);
+  const q=slide("Reproduction and final submission",`Appendix. Follow README for the compact demonstration and full study reproduction. Verify the archive checksum and recorded versions. Record each member's completed work in team.json and regenerate the report and slides. Then run python scripts/package_submission.py --final. This creates three byte-identical copies named INT396_RegNo.zip. Each member uploads their own copy. Repository: ${links.github||"not populated"}. Deployment: ${links.deployment||"not populated"}.`,{appendix:true});
+  lines(q,["Verify the dataset archive, run the study and inspect the results","Run application checks and capture screenshots","Record completed work in team.json and regenerate the documents","Create one INT396_RegNo.zip per member with identical contents"],64,165,1152,27,95);
   tx(q,links.github||"Verified repository URL required",64,575,1152,35,23,{color:TEAL});
   tx(q,links.deployment||"Verified live deployment URL still required",64,615,1152,35,23,{color:TEAL});
 }
@@ -223,9 +241,11 @@ await fs.mkdir(BUILD,{recursive:true}); await fs.mkdir(OUT,{recursive:true});
 const stamp=Date.now();
 const candidate=path.join(BUILD,`candidate-${stamp}.pptx`);
 await (await PresentationFile.exportPptx(p)).save(candidate);
-const finalVersion=path.join(OUT,`TerraLens_Presentation-${stamp}.pptx`);
+const validated=path.join(BUILD,"validated");
+await fs.mkdir(validated,{recursive:true});
+const finalVersion=path.join(validated,`TerraLens_Presentation-${stamp}.pptx`);
 await finalizePresentation({
-  workspaceDir:ROOT,candidatePath:candidate,finalPath:finalVersion,
+  workspaceDir:BUILD,candidatePath:candidate,finalPath:finalVersion,
   pythonExecutable:process.env.RUNTIME_PYTHON||path.join(RUNTIME,"python/bin/python3"),
   integrityValidatorPath:path.join(SKILL,"container_tools/inspect_presentation_package_integrity.py"),
   layoutValidatorPath:path.join(SKILL,"container_tools/inspect_presentation_layout_geometry.py"),

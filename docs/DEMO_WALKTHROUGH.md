@@ -1,6 +1,6 @@
 # TerraLens presentation and demonstration
 
-This is a rehearsal script. The confirmed presentation time is **3-5 minutes, excluding the live demonstration, code explanation and viva**. Use a four-minute main talk across the first 12 slides. The technical appendix is for questions, not part of the timed talk.
+Rehearse a **3-5 minute slide presentation**, with separate time for the live demonstration, code explanation and viva. The main talk uses the first 12 slides. Keep the technical appendix for questions.
 
 ## Before leaving for the presentation
 
@@ -8,7 +8,7 @@ This is a rehearsal script. The confirmed presentation time is **3-5 minutes, ex
 - Open the report, presentation and `artifacts/study.json`. Confirm the numbers match the current application.
 - Use a genuine included satellite patch for upload. Also prepare a text file to show rejection if asked.
 - Check the selected run, explained-variance threshold, descriptor count and audit result. Each member should know these values.
-- Fill names and registration numbers, verify links, and record actual individual contributions in `team.json` before regenerating final documents.
+- Verify the names, registration numbers and links. Record actual individual contributions in `team.json` before regenerating the final documents.
 - Rehearse without internet. Raw dataset download is needed for full study reproduction, not for using the compact reference demonstration.
 
 ## Opening: 30 seconds
@@ -38,7 +38,7 @@ Select a patch and compare its identity in the PCA and t-SNE views. Change a sav
 
 ### Cluster Atlas
 
-Compare a central representative with a more distant sample. Relate the feature profile to the image. Explain that high distance is a caution, not a verified error label.
+Compare a central representative with a boundary patch whose distances to its nearest two centroids are similar. Relate the feature profile to the image.
 
 ### Experiment Bench
 
@@ -46,7 +46,7 @@ Submit one bounded experiment, changing K or the retained-variance target. Expla
 
 ### Patch Analyzer
 
-Upload a real patch. Trace extraction, saved preprocessing and nearest-centroid assignment. Point out the PCA coordinate and distance percentile. Say explicitly that the percentile is not confidence and no t-SNE upload coordinate is fabricated.
+Upload a real patch. Trace extraction, saved preprocessing and nearest-centroid assignment. Point out the PCA coordinate and the centroid distance relative to the reference group's median. Explain that distance describes geometric similarity in the retained PCA space.
 
 ### Study & Evidence
 
@@ -65,7 +65,7 @@ If the hosted app is asleep, use the working local copy. If a live experiment is
 - “Why is the best K not ten?” Because the selection did not use labels; broad visual similarity and semantic categories can differ.
 - “Why not add a CNN?” Pretrained embeddings could improve semantic representation, but they add training provenance and reduce the simplicity of an interpretable primary study. They are future work, not an implemented result.
 - “Why not a map?” The application explores anonymous patches and does not claim location reconstruction or use a geospatial split. A decorative world map would not add evidence.
-- “What did each person do?” Give concrete completed work supported by your notes and demonstrations. Do not read proposed responsibilities as facts.
+- “What did each person do?” Describe the work you personally completed and use your rehearsal notes, checks or examples as evidence.
 
 ## Personal rehearsal checklist
 

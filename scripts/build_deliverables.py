@@ -280,8 +280,14 @@ def build_report(study, selected, audit, team, links, figures):
     for index in range(3):
         member = members[index] if index < len(members) else {}
         member_rows.append([member.get("name") or f"Member {index + 1}: NAME REQUIRED", member.get("registration_number") or "REGISTRATION NUMBER REQUIRED"])
-    unresolved = any(not member.get("name") or not member.get("registration_number") for member in members) or len(members) != 3
-    unresolved = unresolved or not links.get("github") or not links.get("deployment") or any(not member.get("completed_work") for member in members)
+    outstanding = []
+    if len(members) != 3 or any(not member.get("name") or not member.get("registration_number") for member in members):
+        outstanding.append("confirm the three names and registration numbers")
+    if len(members) != 3 or any(not member.get("completed_work", "").strip() for member in members):
+        outstanding.append("record each member's actual contribution")
+    if not links.get("github") or not links.get("deployment"):
+        outstanding.append("add the verified repository and deployment URLs")
+    submission_status = "Before upload, " + ", ".join(outstanding) + "." if outstanding else "Identity fields, contributions and links are populated. Create one INT396_RegNo.zip per member."
     institution = team.get("institution") or "B.Tech | INT396 Unsupervised Learning"
     body.extend([
         Spacer(1, 22), P("TerraLens", "TerraCover"),
@@ -290,7 +296,7 @@ def build_report(study, selected, audit, team, links, figures):
         Spacer(1, 15), table(member_rows, [245, 242]), Spacer(1, 16),
         P(text(institution)),
         P("Presentation: " + text(team.get("presentation_date", "10 November 2026"))),
-        P("<b>Submission status:</b> " + ("Identity, actual contributions and/or verified project links still require completion. This copy is not ready for final submission." if unresolved else "Identity fields and links are populated; verify all submission checks before upload."), "TerraSmall"),
+        P(text(submission_status), "TerraSmall"),
         Spacer(1, 18), P("Abstract", "TerraH2"),
         P(f"This project studies label-free visual structure in EuroSAT RGB satellite patches. A deterministic {len(study.get('feature_names', []))}-descriptor representation captures colour, texture and edges. Study-fitted standardisation and PCA support K-Means comparisons, while matched PCA and t-SNE visualisations expose representation effects. The recorded reference chooses K={selected['k']} with {selected['components']} principal components. All reported measurements are loaded from the generated study artifacts. A separate post-selection audit evaluates agreement with reference categories without using them for fitting or selection. The application combines this reproducible study with patch inspection, bounded experiments and saved-model image analysis."),
     ])
@@ -458,12 +464,14 @@ def build_report(study, selected, audit, team, links, figures):
         heading("Defensive controls"),
         para("The server bounds upload bytes, decoded image size and experiment parameters. It checks image decoding and rejects unsupported content. Uploads are not retained after the request; temporary multipart buffers are closed. Bounded image workers avoid blocking the request loop. Anonymous IDs prevent category-bearing paths from entering model inputs. Uploaded code or pickle files are not executed; only trusted generated model artifacts are loaded."),
         heading("Deployment"),
-        para("The production FastAPI service serves the built frontend and API from one origin. Local development uses Vite's API proxy. Source and configuration are included for reproducibility. A public deployment is claimed only when the populated live URL has been opened and verified."),
+        para("The production FastAPI service serves the built frontend and API from one origin. Local development uses Vite's API proxy. The reproduction materials include the source and deployment configuration."),
     )
     shots = [
         ("observatory", "Application: Observatory", "The overview connects genuine patch imagery with the selected reference study, dataset audit and numerical evidence."),
         ("projection-lab", "Application: Projection Lab", "Linked patch identity supports comparison of PCA and saved t-SNE views on the same visual cohort. Parameter settings and interpretation cautions are visible."),
         ("patch-analyzer", "Application: Patch Analyzer", "A validated image upload uses the saved reference pipeline. PCA coordinates and distance diagnostics are shown without claiming class probability or fabricated t-SNE coordinates."),
+        ("experiment-bench", "Application: Experiment Bench", "The completed live run shows how to inspect results and export its record. The comparison table computes silhouette on the same evaluation sample in the common standardised feature space."),
+        ("reference-audit", "Application: Reference Audit", "The separate audit compares the frozen groups with the EuroSAT categories. Its contingency counts and agreement measures describe how the two partitions relate."),
     ]
     shot_count = 0
     for stem, title, caption in shots:
@@ -475,14 +483,12 @@ def build_report(study, selected, audit, team, links, figures):
         add_page("Application overview", para("The six implemented views are Observatory, Projection Lab, Cluster Atlas, Experiment Bench, Patch Analyzer and Study & Evidence. Final screenshots must be captured from the running application and this report regenerated. No mock screenshot is presented as a test result."))
     verification = read_json(ROOT / "artifacts" / "verification.json", {})
     add_page("Testing and performance",
-        para("Testing covers numerical invariants, saved-model reuse, API validation and interface behaviour. A result is described as passed only when a verification record exists. The source includes the executable checks; rerun them after changes and regenerate this report."),
+        para("The verification record covers numerical invariants, saved-model reuse, API validation and interface behaviour. The source includes executable checks."),
         table(verification_rows(verification), [180, 307]),
         heading("Measured reference timings"),
-        para(f"The selected clustering run records {fmt(selected.get('runtime_seconds'), 2)} seconds. Individual t-SNE timings are tabulated earlier. These are recorded run timings, not universal latency guarantees; CPU, sample size, package builds and host load change performance."),
+        para(f"The selected clustering run took {fmt(selected.get('runtime_seconds'), 2)} seconds. See the t-SNE sensitivity table for projection timings. Runtime varies with sample size, CPU and host load."),
         heading("Resource bounds"),
-        para("Interactive sample size is bounded and the API runs one job at a time. Silhouette uses a documented bounded sample because pairwise distances are expensive. The compact descriptor bundle avoids loading the raw image archive for routine experiments. Precomputed genuine t-SNE views make the comparison usable on a small host."),
-        heading("Manual evidence"),
-        para(f"This report includes {shot_count} captured application screens. Verify navigation, linked patch selection, experiment completion, upload output, export consistency, keyboard focus and mobile overflow on the final build. Screenshot capture alone does not prove every interaction works."),
+        para("The API runs one experiment at a time on a bounded sample. Compact descriptors support experiments without the raw archive. Stored t-SNE runs support interactive comparison on a small host."),
     )
     add_page("Limitations, impact and future scope",
         heading("Scientific limitations"),
@@ -495,23 +501,23 @@ def build_report(study, selected, audit, team, links, figures):
         heading("Conclusion"),
         para("TerraLens delivers an inspectable pipeline and working application for a reproducible dimensionality-reduction study. Its conclusion concerns the structure captured by these particular visual descriptors. The external audit and limitations keep that conclusion aligned with the available evidence."),
     )
-    contribution_rows = [["Member", "Proposed responsibility / completed work"]]
+    contribution_rows = [["Member", "Assigned responsibility / completed work"]]
     defaults = ["Dataset, descriptors, preprocessing and PCA", "Clustering, t-SNE, sensitivity and evaluation", "Application, API verification, deployment and demonstration"]
     for index in range(3):
         member = members[index] if index < len(members) else {}
-        completed = member.get("completed_work") or "Completed work not supplied; verify and fill before submission."
-        proposed = member.get("responsibility") or defaults[index]
-        contribution_rows.append([member.get("name") or f"Member {index + 1}: name required", f"Proposed: {proposed}\nCompleted: {completed}"])
+        completed = member.get("completed_work", "").strip() or "Pending. Record completed work before submission."
+        assigned = member.get("responsibility") or defaults[index]
+        contribution_rows.append([member.get("name") or f"Member {index + 1}: name required", f"Assigned: {assigned}\nCompleted work: {completed}"])
     add_page("Individual contributions and reproduction",
         table(contribution_rows, [120, 367]),
-        P("Responsibilities above are proposals unless actual completed work is explicitly supplied. They must not be presented as a factual record of work already completed.", "TerraSmall"),
+        P("The table records team assignments and the completion status supplied by each member.", "TerraSmall"),
         heading("AI assistance and originality"),
         para("Codex assisted source implementation and document drafting. The team must understand, verify and explain the delivered work, record its actual contributions and follow its institution's AI-assistance rules. Third-party libraries and the EuroSAT dataset are cited; their published benchmark results are not claimed as our own."),
         heading("Reproduction and project links"),
         para("Follow README.md to install dependencies and run the compact demonstration. Use scripts/prepare_study.py and the documented external RGB archive for full reproduction. Regenerate the report and slides after changing results, names or screenshots."),
         P("GitHub: " + text(links.get("github") or "VERIFIED REPOSITORY URL REQUIRED") + "<br/>Deployment: " + text(links.get("deployment") or "VERIFIED LIVE URL REQUIRED"), "TerraSmall"),
         heading("Submission checks"),
-        para("The final ZIP must contain source, dependencies, README, report PDF, presentation and PROJECT_LINKS.txt. Exclude raw downloads, environments, node_modules, caches and secrets. All members upload the same final contents individually. The supplied ZIP naming rules conflict; confirm whether INT396_RegNo.zip or the group registration-number format is required. The team's presentation date is 10 November; freeze the build by 9 November even though the stated UMS deadline is 15 November 2026."),
+        para("The final ZIP includes source, dependencies, README, report PDF, presentation and PROJECT_LINKS.txt. After recording completed work in team.json and regenerating the documents, run <b>python scripts/package_submission.py --final</b>. The script creates three byte-identical copies named INT396_RegNo.zip, one for each member to upload individually. The team presents on 10 November 2026. The UMS deadline is 15 November 2026."),
     )
     ref_items = []
     for number, title, url in REFERENCES:
@@ -565,7 +571,8 @@ def main():
         target.parent.mkdir(parents=True, exist_ok=True)
         pdf = pdfcanvas.Canvas(str(target), pagesize=(960, 540))
         pdf.setTitle("TerraLens - Project Presentation")
-        pdf.setAuthor("Lovejeet Singh, Mohammad Asim, Reshu Kumar")
+        team = read_json(ROOT / "team.json", {})
+        pdf.setAuthor(", ".join(member["name"] for member in team.get("members", []) if member.get("name")) or "TerraLens project team")
         for slide in slides:
             with PILImage.open(slide) as im:
                 if im.width < 1920 or im.height < 1080:

@@ -87,7 +87,7 @@ Fill `team.json` with the real names, registration numbers, institution and actu
 
 The GitHub repository contains anonymous research data and source. Personalised team details and generated submission documents are kept in the local ZIP. When cloning the public repository, copy `team.example.json` to `team.json` and `PROJECT_LINKS.example.txt` to `PROJECT_LINKS.txt` before generating personalised documents.
 
-The report and slides are generated from actual study artifacts and team metadata. See `docs/DELIVERABLES.md` for generation and editable presentation instructions. Use `scripts/package_submission.py` to package the release after team identities are supplied. The teacher supplied conflicting ZIP naming rules; confirm which one applies before upload. Each member uploads the agreed final contents individually.
+Follow `docs/TEAM_REHEARSAL.md` for the assigned roles and practice tasks. After the team records completed work, regenerate the report and slides using `docs/DELIVERABLES.md`. Run `.venv/bin/python scripts/package_submission.py --final` to create three identical archives with the confirmed `INT396_RegNo.zip` filenames. Each member uploads the copy bearing their registration number.
 
 Presentation: **10 November 2026**. Internal freeze: **9 November 2026**. Teacher's stated UMS deadline: **15 November 2026**.
 

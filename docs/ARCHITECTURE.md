@@ -104,4 +104,4 @@ Candidate PCA runs report their retained-space internal metrics. A common standa
 
 ## Submission identity and originality
 
-`SIH26142` is teacher-provided metadata, not a claim of independent verification on an SIH portal. Names, registration numbers, actual member contributions and live links must be filled before final submission. AI assistance should be disclosed in accordance with institutional rules. The two supplied ZIP naming conventions conflict; obtain the teacher's final convention before naming the upload.
+The teacher assigned problem ID `SIH26142`. The submission requires names, registration numbers, actual member contributions and verified links. Disclose AI assistance in accordance with institutional rules. Each member submits identical archive contents under their own `INT396_RegNo.zip` filename.

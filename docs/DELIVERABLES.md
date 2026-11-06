@@ -10,8 +10,21 @@
 
 ## Editing and regeneration
 
-Fill `team.json` with actual completed work and update verified URLs in `links.json`. Capture genuine screenshots under `docs/screenshots` as JPG or PNG. After scientific or metadata changes, run `python scripts/build_deliverables.py` in the installed project environment. This rebuilds the report and shared presentation data. Run `scripts/build_presentation.mjs` with the Codex bundled Node/artifact-tool runtime to rebuild the editable deck, high-resolution renders and PDF. The deck can also be edited directly in PowerPoint.
+Fill `team.json` with one concise sentence of actual completed work per member and update verified URLs in `links.json`. Capture screenshots under `docs/screenshots` as JPG or PNG. Run these commands from the project directory to regenerate the report and both presentation formats:
+
+```sh
+.venv/bin/python scripts/build_deliverables.py
+"${CODEX_NODE_BIN:-$HOME/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node}" scripts/build_presentation.mjs
+```
+
+The second command uses Codex's bundled Node and `@oai/artifact-tool`. For a custom installation, set `CODEX_NODE_BIN`, `RUNTIME_NODE_MODULES` and `PRESENTATIONS_SKILL_DIR` to the local executable, modules directory and skill directory. Working files go in `.build/deliverables`. The editable deck can also be revised in PowerPoint.
 
 Check the editable PPTX in the PowerPoint or Keynote version you plan to use. Native scatter-chart rendering varies between applications; the supplied PDF preserves the inspected authoring appearance. The PPTX contains editable tables, charts and diagrams, but has not been visually verified inside PowerPoint or Keynote.
 
-The report explicitly distinguishes proposed responsibilities from actual completed contributions. The documents are not final submission-ready until completed contributions and the deployment URL are supplied and verified. Confirm the teacher's conflicting ZIP filename rules before upload.
+The report and slides show each member's assigned responsibility. Completion records are pending. After each member finishes their work, add it to `team.json` and regenerate the documents with the commands above. Then run:
+
+```sh
+.venv/bin/python scripts/package_submission.py --final
+```
+
+This creates three byte-identical copies named `INT396_RegNo.zip`. Each member uploads the copy named with their registration number.

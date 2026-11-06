@@ -60,6 +60,7 @@ export interface ExperimentConfig {
 }
 export interface ExperimentResult extends Run {
   points: Point[];
+  retained_variance?: number;
   tsne?: { perplexity: number; trustworthiness: number; runtime_seconds: number } | null;
 }
 export interface Experiment {

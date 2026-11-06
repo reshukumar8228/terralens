@@ -1,5 +1,5 @@
 import { CheckCircle, DownloadSimple, Flask, WarningCircle } from '@phosphor-icons/react';
-import { downloadJson, format } from '../api';
+import { downloadJson, format, percent } from '../api';
 import { Scatter } from '../Charts';
 import { MetricsRow, Notice, Panel } from '../UI';
 import type { Experiment, ExperimentResult, PatchContext } from '../types';
@@ -25,7 +25,10 @@ function RunResult({ job, result, selectPatch }: { job: Experiment; result: Expe
         <section>
           <h3>PCA projection</h3>
           <Scatter points={result.points} projection="pca" compact onSelect={inspectPoint}/>
-          <p className="caption">First two coordinates of the {result.components}-component K-Means input.</p>
+          <p className="caption">
+            PC1 and PC2 of the {result.components}-component K-Means input.
+            {result.retained_variance != null && ` The retained components explain ${percent(result.retained_variance, 2)} of variance.`}
+          </p>
         </section>
         {result.tsne && (
           <section>
@@ -78,8 +81,11 @@ export default function ExperimentOutput({ job, selectPatch }: { job: Experiment
       ? <RunResult job={job} result={job.result} selectPatch={selectPatch}/>
       : <Notice>The completed run has no result payload.</Notice>;
   }
+  const detail = job
+    ? `Run ${job.id.slice(0, 12)} · K ${job.config.k} · PCA target ${percent(job.config.variance, 0)} · seed ${job.config.seed}`
+    : 'Results for your current settings.';
   return (
-    <Panel title="The experiment notebook" detail={job ? `Run ${job.id.slice(0, 12)}` : 'Results for your current settings.'} className="experiment-result">
+    <Panel title="The experiment notebook" detail={detail} className="experiment-result">
       {content}
     </Panel>
   );

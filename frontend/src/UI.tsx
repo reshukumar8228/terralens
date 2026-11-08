@@ -1,6 +1,6 @@
 import { ArrowUpRight, Info, WarningCircle } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
-import { fixed, format, patchUrl, titleCase } from './api';
+import { fixed, format, patchUrl, titleCase, clusterName } from './api';
 import { clusterColor } from './Charts';
 import type { Cluster, Feature, Metrics } from './types';
 
@@ -17,7 +17,7 @@ export function Patch({ id, onSelect, className = '', index }: { id: string; onS
   return <button className={`patch ${className}`} onClick={() => onSelect(id)} aria-label={`Inspect satellite patch ${id}`}><img src={patchUrl(id)} alt={`EuroSAT satellite patch ${id}`} loading="lazy" width="64" height="64"/>{index != null ? <span className="patch-index">{String(index + 1).padStart(2, '0')}</span> : null}<span className="patch-open"><ArrowUpRight size={16}/></span></button>;
 }
 export function ClusterPills({ clusters, selected, onSelect, all = true }: { clusters: Cluster[]; selected: number | null; onSelect: (id: number | null) => void; all?: boolean }) {
-  return <div className="cluster-pills" aria-label="Filter by cluster">{all ? <button className={`cluster-pill ${selected == null ? 'is-active' : ''}`} aria-pressed={selected == null} onClick={() => onSelect(null)}>All groups</button> : null}{clusters.map(c => <button key={c.id} className={`cluster-pill ${selected === c.id ? 'is-active' : ''}`} aria-pressed={selected === c.id} onClick={() => onSelect(selected === c.id && all ? null : c.id)}><span className="colour-dot" style={{ background: clusterColor(c.id) }}/>Group {String(c.id + 1).padStart(2, '0')}<span className="pill-count">{format(c.count, 0)}</span></button>)}</div>;
+  return <div className="cluster-pills" aria-label="Filter by cluster">{all ? <button className={`cluster-pill ${selected == null ? 'is-active' : ''}`} aria-pressed={selected == null} onClick={() => onSelect(null)}>All groups</button> : null}{clusters.map(c => <button key={c.id} className={`cluster-pill ${selected === c.id ? 'is-active' : ''}`} aria-pressed={selected === c.id} onClick={() => onSelect(selected === c.id && all ? null : c.id)} title={`${clusterName(c)}: ${c.description}`}><span className="colour-dot" style={{ background: clusterColor(c.id) }}/>Group {String(c.id + 1).padStart(2, '0')} · {clusterName(c)}<span className="pill-count">{format(c.count, 0)}</span></button>)}</div>;
 }
 export function MetricsRow({ metrics, stability, compact = false }: { metrics: Metrics; stability?: number | null; compact?: boolean }) {
   const items = [

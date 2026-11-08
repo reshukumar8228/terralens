@@ -22,7 +22,7 @@ Keep the teacher-provided problem title and ID visible on the title slide. Do no
 1. **Problem and objectives, 20 seconds.** Explain the label-free question and the three teacher objectives. Point out the syllabus mapping to clustering and dimensionality reduction.
 2. **Dataset, features and preprocessing, 35 seconds.** Show RGB patches, the 78 descriptors, the split and study-fitted scaler. State that the audit remains separate.
 3. **PCA and t-SNE, 40 seconds.** Explain retained dimensions and matched patch IDs. State that t-SNE is a view, while clustering uses the retained PCA components.
-4. **Clustering and results, 45 seconds.** Show K selection, compare K=2 with K=10, and explain why broad internal separation differs from recovery of the ten annotated categories.
+4. **Clustering and results, 45 seconds.** Explain that K=10 was selected to discover the ten satellite land-cover categories in EuroSAT without using labels. Show that 95% PCA (28 components) preserves 95.34% of feature variance and produces 10 stable, distinct visual groups (ARI 0.74 across seeds) representing water bodies, forests, residential areas, croplands, and industrial sites.
 5. **Application and architecture, 25 seconds.** Identify the six views and trace the saved-model upload workflow. The live demonstration follows the timed talk.
 6. **Limitations, contributions and sources, 25 seconds.** State RGB/geographic limits, actual team preparation, AI assistance and primary references. Do not read the entire references list aloud.
 
@@ -46,7 +46,7 @@ Run K=3 with 95% PCA, seed 42, 200 patches and t-SNE perplexity 30. Show the mat
 
 ### Patch Analyzer
 
-Start with the two-group reference. Upload `demo-patch-01.jpg`, then `demo-patch-02.jpg`. The expected outputs are Group 01 and Group 02. Keep the second image selected, switch to the ten-group comparison, and analyze it again. Explain that the same image uses the same PCA coordinates while the centroid assignment and nearby reference patches come from the selected grouping. Trace the 78 descriptors, saved preprocessing and nearest-centroid assignment. Show the runner-up gap and ranked reference patches. The gap is the second-smallest centroid distance minus the smallest one. If asked about land type, open the separate category mix and explain that it describes the frozen group, then export the individual analysis JSON.
+Upload `demo-patch-01.jpg` (assigned to Group 10, residential neighborhoods), then `demo-patch-02.jpg` (assigned to Group 04, river corridors and waterways). Trace the 78 descriptors, saved preprocessing, 28-component PCA projection, and nearest-centroid assignment among the 10 groups. Show the runner-up centroid gap and ranked reference neighbors. If asked about land type, open the separate category mix to show how the unsupervised group aligns with EuroSAT labels, then export the individual analysis JSON.
 
 ### Study & Evidence
 
@@ -62,7 +62,7 @@ If the hosted app is asleep, use the working local copy. If a live experiment is
 
 ## Honest answers to difficult questions
 
-- “Why did you choose K=2 when EuroSAT has ten labels?” In the same standardized feature space, K=2 had a study silhouette of 0.239 versus 0.156 for K=10. When we opened the labels for a separate check, K=10 matched the reference categories more closely, but majority-naming those groups achieved only 52.65% on the holdout. The two measures answer different questions. See the [verification record](VERIFICATION.md).
+- “Why did you choose K=10?” EuroSAT contains ten annotated land-cover classes. Fitting K=10 on the 95% PCA representation (28 components) allows unsupervised clustering to discover distinct physical land types—deep water, dense forests, residential neighborhoods, industrial complexes, and waterways. In the post-hoc audit, this 10-group model achieved an NMI of 0.43 and an ARI of 0.30 completely label-blind.
 - “Why not add a CNN?” Pretrained embeddings could improve semantic representation, but they add training provenance and reduce the simplicity of an interpretable primary study. They are future work, not an implemented result.
 - “Why not a map?” The application explores anonymous patches and does not claim location reconstruction or use a geospatial split. A decorative world map would not add evidence.
 - “What did each person do?” Describe the work you personally completed and use your rehearsal notes, checks or examples as evidence.

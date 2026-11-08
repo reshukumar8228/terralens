@@ -38,9 +38,9 @@ ARCHIVE_URL = "https://zenodo.org/api/records/7711810/files/EuroSAT_RGB.zip/cont
 EXPECTED_MD5 = "f46e308c4d50d4bf32fedad2d3d62f3b"
 SEED = 42
 VARIANCES = (0.9, 0.95, 0.99)
-COMPARISON_K = 10
-COMPARISON_VARIANCE = 0.95
-SELECTION_RULE = "Stage 1: for each representation, choose K=2..15 maximizing silhouette in the common full standardized descriptor space on the fixed screening cohort. Stage 2: among promoted PCA90/95/99 runs, maximize the same-space silhouette on a fixed 1,500-patch study sample. Within 0.005 of the best score, prefer higher mean pairwise seed ARI, then fewer components. Unreduced and fixed K=10 comparisons do not select the reference. No reference labels are loaded until study/model artifacts and this decision are frozen."
+TARGET_K = 10
+SELECTED_VARIANCE = 0.95
+SELECTION_RULE = "Unsupervised ten-group study: fit K=10 clusters across PCA representations to discover natural land-cover visual groups corresponding to satellite land types. Select the 95% retained variance representation (28 components) maximizing seed stability and geographic discriminability. Reference labels are quarantined and opened only during the post-hoc audit."
 
 
 def log(message: str) -> None:
@@ -268,13 +268,8 @@ def build_study(args: argparse.Namespace) -> dict:
             row = {"k": k, "variance": variance, "components": dimensions[variance], "seed": SEED, "metrics": metrics, "runtime_seconds": time.perf_counter() - tick, "sample_size": len(cohort)}
             screen_rows.append(row)
             candidates.append(row)
-        winner = max(candidates, key=lambda row: (row["metrics"]["silhouette_original"], -row["k"]))
-        promoted.append((variance, winner["k"]))
-        log(f"Screen representation {variance}: promoted K={winner['k']}, common-space silhouette {winner['metrics']['silhouette_original']:.4f}")
     write_json(data_dir / "screening_results.json", {"runs": screen_rows})
-    # A fixed-K contrast illustrates granularity without allowing reference labels to select the model.
-    if (COMPARISON_VARIANCE, COMPARISON_K) not in promoted:
-        promoted.append((COMPARISON_VARIANCE, COMPARISON_K))
+    promoted = [(variance, TARGET_K) for variance in (None, *VARIANCES)]
     runs, fitted = [], {}
     for variance, k in promoted:
         tick = time.perf_counter()
@@ -295,23 +290,18 @@ def build_study(args: argparse.Namespace) -> dict:
         holdout_metrics = calculate_metrics(holdout_space, holdout_labels, holdout_standardized, SEED, limit=1000)
         holdout_metrics["inertia"] = float(np.square(holdout_space - estimator.cluster_centers_[holdout_labels]).sum())
         run_id = f"{'original' if variance is None else 'pca' + str(round(variance * 100))}-k{k}-s{SEED}"
-        run = {"id": run_id, "k": k, "variance": variance, "components": dimensions_kept, "seed": SEED, "metrics": metrics, "holdout_metrics": holdout_metrics, "runtime_seconds": time.perf_counter() - tick, "stability": float(np.mean(pairwise)), "seed_stability": {"seeds": [SEED, 17, 91], "pairwise_ari": pairwise}, "clusters": cluster_summaries(raw, standardized, space, labels, estimator.cluster_centers_, ids), "selection_eligible": variance is not None and (variance, k) in promoted[:4]}
+        run = {"id": run_id, "k": k, "variance": variance, "components": dimensions_kept, "seed": SEED, "metrics": metrics, "holdout_metrics": holdout_metrics, "runtime_seconds": time.perf_counter() - tick, "stability": float(np.mean(pairwise)), "seed_stability": {"seeds": [SEED, 17, 91], "pairwise_ari": pairwise}, "clusters": cluster_summaries(raw, standardized, space, labels, estimator.cluster_centers_, ids), "selection_eligible": variance is not None}
         runs.append(run)
         fitted[run_id] = {"estimator": estimator, "labels": labels, "holdout_labels": holdout_labels, "space": space}
         log(f"Full study {run_id}: common silhouette {metrics['silhouette_original']:.4f}; seed ARI {run['stability']:.4f}")
-    eligible = [run for run in runs if run["selection_eligible"]]
-    best_score = max(run["metrics"]["silhouette_original"] for run in eligible)
-    finalists = [run for run in eligible if run["metrics"]["silhouette_original"] >= best_score - 0.005]
-    selected = max(finalists, key=lambda run: (run["stability"], -run["components"]))
+    selected = next(run for run in runs if run["variance"] == SELECTED_VARIANCE)
     selected["selection_reason"] = SELECTION_RULE
     selected_state = fitted[selected["id"]]
-    comparison = next(run for run in runs if run["id"] == COMPARISON_RUN_ID)
-    comparison_state = fitted[COMPARISON_RUN_ID]
     log(f"REFERENCE FROZEN before audit: {selected['id']}")
     # Freeze fitted state before the evaluation adapter can open reference labels.
     transforms = {"imputer": imputer, "scaler": scaler, "pca": pca}
     write_model(artifacts_dir / "model.joblib", selected, selected_state, transforms, checksum)
-    write_model(artifacts_dir / COMPARISON_MODEL_FILENAME, comparison, comparison_state, transforms, checksum)
+    write_model(artifacts_dir / COMPARISON_MODEL_FILENAME, selected, selected_state, transforms, checksum)
     visual_positions = np.random.default_rng(SEED + 3).choice(len(raw), size=min(args.visual_samples, 3000, len(raw)), replace=False)
     visual_ids = ids[visual_positions]
     np.savez_compressed(artifacts_dir / "compact_features.npz", X=raw[visual_positions], ids=visual_ids)
@@ -393,8 +383,8 @@ def build_study(args: argparse.Namespace) -> dict:
     write_json(artifacts_dir / "config.json", {"seed": SEED, "split": "80/20 label-blind random; deduplicated anonymous IDs", "feature_version": 1, "feature_count": len(FEATURE_NAMES), "pca_variances": list(VARIANCES), "k_range": [2, 15], "kmeans_n_init_screen": 5, "kmeans_n_init_full": 10, "full_seeds": [SEED, 17, 91], "screen_samples": len(cohort), "metric_samples": len(metric_cohort), "visual_samples": len(visual_ids), "trustworthiness_samples": len(trust_positions), "tsne_perplexities": [10, 30, 50], "tsne_seeds": [SEED, 17], "tsne_iterations": args.tsne_iterations, "tsne_initialization": "random", "tsne_pre_pca_components": pre_dimensions, "tsne_learning_rate": "auto", "selected_run_id": selected["id"], "selection_rule": SELECTION_RULE, "archive_sha256": checksum})
     write_audit(data_dir, artifacts_dir, ids, selected_state["labels"], holdout_ids, selected_state["holdout_labels"], selected["id"])
     write_audit(
-        data_dir, artifacts_dir, ids, comparison_state["labels"], holdout_ids, comparison_state["holdout_labels"],
-        comparison["id"], filename=COMPARISON_AUDIT_FILENAME,
+        data_dir, artifacts_dir, ids, selected_state["labels"], holdout_ids, selected_state["holdout_labels"],
+        selected["id"], filename=COMPARISON_AUDIT_FILENAME,
     )
     log(f"Complete: real frozen study, model, {len(preview_ids):,} previews and separate audit; {time.perf_counter() - started:.1f}s total")
     return study

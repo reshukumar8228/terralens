@@ -1,12 +1,12 @@
 import { ArrowRight, Crosshair, DownloadSimple } from '@phosphor-icons/react';
-import { downloadJson, format } from '../api';
+import { clusterName, downloadJson, format } from '../api';
 import { clusterColor } from '../Charts';
 import { Notice, Panel, Patch } from '../UI';
 import type { Analysis, Run } from '../types';
 import CategoryMix from './CategoryMix';
 
 function groupName(id: number) {
-  return 'Group ' + String(id + 1).padStart(2, '0');
+  return 'Group ' + String(id + 1).padStart(2, '0') + ' · ' + clusterName(id);
 }
 
 function CentroidEvidence({ result }: { result: Analysis }) {
@@ -37,7 +37,7 @@ function CentroidEvidence({ result }: { result: Analysis }) {
       </dl>
       <p className="caption">
         Smaller distances in the fitted PCA space indicate more similar features.
-        {hasRunnerUp && ' A small gap means the two groups are close competitors for this patch.'}
+        {hasRunnerUp && ' A small gap means the runner-up group is a close competitor for this patch.'}
       </p>
       <p className="analyzer-percentile">
         <strong>{format(result.reference_percentile, 1)}th percentile</strong>
@@ -130,15 +130,22 @@ export default function AnalysisResult({
           {String(result.cluster + 1).padStart(2, '0')}
         </span>
         <div>
-          <span className="workspace-label">Assigned visual group</span>
-          <h3>{groupName(result.cluster)}</h3>
-          {description && <p className="assignment-description">{description}</p>}
+          <span className="workspace-label">Assigned visual group · Group {String(result.cluster + 1).padStart(2, '0')}</span>
+          <h3>{result.cluster_name || cluster?.name || clusterName(result.cluster)}</h3>
+          {description && <p className="assignment-description"><strong>Visual characteristics:</strong> {description}</p>}
         </div>
       </div>
       <CentroidEvidence result={result}/>
       <NearestPatches result={result} onSelect={selectPatch}/>
       <CategoryMix cluster={result.cluster} runId={run.id} isReference={isReference}/>
-      {result.warnings.map((warning, index) => <Notice warning key={index}>{warning}</Notice>)}
+      {result.warnings.length > 0 && (
+        <div className="analysis-notices">
+          {result.warnings.map((warning, index) => {
+            const isAlert = warning.toLowerCase().includes('fail') || warning.toLowerCase().includes('corrupt') || warning.toLowerCase().includes('error');
+            return <Notice warning={isAlert} key={index}>{warning}</Notice>;
+          })}
+        </div>
+      )}
     </Panel>
   );
 }

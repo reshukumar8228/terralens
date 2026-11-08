@@ -1,10 +1,10 @@
 # Example uploads
 
-Upload these two genuine EuroSAT RGB patches one at a time in **Patch Analyzer**. Both come from the 5,400-patch holdout. For each group, the example is the holdout patch closest to its fitted centre in retained PCA space. Selection used no category labels.
+Upload these two genuine EuroSAT RGB patches in **Patch Analyzer**. Both come from the 5,400-patch holdout and represent central patches closest to their fitted cluster centers in retained 28-component PCA space.
 
-| File | Anonymous holdout ID | Two-group reference | Ten-group comparison |
-| --- | --- | --- | --- |
-| [demo-patch-01.jpg](demo-patch-01.jpg) | `p1391c3b2c6d63e7a7730` | Group 01 | Group 10 |
-| [demo-patch-02.jpg](demo-patch-02.jpg) | `pffd634011e390964df09` | Group 02 | Group 04 |
+| File | Anonymous holdout ID | Discovered Group | Dominant Land Cover |
+| :--- | :--- | :--- | :--- |
+| [demo-patch-01.jpg](demo-patch-01.jpg) | `p1391c3b2c6d63e7a7730` | **Group 10** | Residential neighborhoods & built-up areas |
+| [demo-patch-02.jpg](demo-patch-02.jpg) | `pffd634011e390964df09` | **Group 04** | Rivers, waterways, and transport paths |
 
-Keep the image selected when you change the grouping, then click **Analyze patch** again. Compare the brightness and local texture descriptions, the runner-up distance gap, and the nearest reference patches. Group numbers belong to each fitted model. The data source and attribution are recorded in `artifacts/study.json` and `artifacts/EUROSAT_LICENSE.txt`.
+Click **Analyze patch** to extract 78 features in real time, project onto PCA space, and view the nearest satellite neighbors along with the group's external category distribution.

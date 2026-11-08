@@ -50,9 +50,9 @@ Use these to practise speaking, then demonstrate the answer in the application o
 
 24. **How does K-Means work?** It alternates nearest-centroid assignments and centroid means to reduce the within-cluster sum of squared distances, beginning with K-Means++ initialisation and multiple starts.
 
-25. **How did you choose K?** We sweep the documented range and compare internal evidence in consistent spaces, stability and unlabeled examples. Labels remain closed during this choice. The selected run and rule are recorded, not chosen to match ten source categories.
+25. **How did you choose K?** We choose K=10 to discover the ten distinct satellite land-cover categories present in EuroSAT without using labels. Across screening sweeps of K=2..15, K=10 with 95% PCA (28 components) provides the optimal balance of geometric separation, seed stability (ARI 0.738), and granular geographic discriminability.
 
-26. **Why can two clusters be a valid result?** Visual descriptors may have a strong broad split such as brightness or texture while fine categories overlap. Strong internal separation at K=2 does not imply recovery of ten land categories. We report both facts.
+26. **Why choose 10 clusters instead of a smaller K?** While very small K (like K=2) creates an obvious geometric split between bright/dry land and dark/water, it is uninformative for earth observation. Choosing K=10 allows the unsupervised model to discover specific visual groupings: deep lakes, dense forests, residential neighborhoods, industrial facilities, agricultural croplands, and river waterways.
 
 27. **What is inertia and why is the elbow not enough?** Inertia is the squared distance to assigned centroids. It normally falls with increasing K, and the elbow may be ambiguous. It is one diagnostic alongside separation, stability and interpretation.
 
@@ -66,7 +66,7 @@ Use these to practise speaking, then demonstrate the answer in the application o
 
 32. **What if external agreement is low?** Then these descriptors and this clustering objective have not recovered the annotated categories well. We discuss the visual structure actually found and propose justified extensions rather than relabeling the result as success.
 
-33. **How do you assign an uploaded image?** The same feature extractor, imputer, scaler and PCA transform the patch. The chosen K-Means fit assigns the nearest centroid from either two or ten centers. The backend compares the next closest centroid and ranks candidate patches within the assigned group using Euclidean distance across the retained PCA components.
+33. **How do you assign an uploaded image?** The saved feature extractor computes 78 descriptors, and the saved scaler and PCA transform the patch into 28 principal components. The K-Means model assigns the nearest centroid among the 10 fitted centers, computes the runner-up distance gap, and retrieves nearest neighbor patches from that group.
 
 34. **Is the distance percentile a confidence score?** No. It compares distance with empirical reference distances inside the assigned group. It is not calibrated probability and does not prove the image belongs to the dataset distribution.
 

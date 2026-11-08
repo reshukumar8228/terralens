@@ -72,14 +72,20 @@ def analyze_upload(raw: bytes, artifacts_dir: Path, comparison: bool = False) ->
                 width, height = source.size
                 if min(width, height) < 16 or max(width, height) > 4096:
                     raise HTTPException(422, "Choose an image between 16 and 4096 pixels on each side.")
-                if width != height:
-                    notices.append("A non-square image is resized to a square patch; this may alter its texture.")
-                if source.mode != "RGB":
-                    notices.append("The image was converted to RGB; transparency and extra bands are not model inputs.")
                 source.load()
-                image = source.convert("RGB").resize((64, 64), Image.Resampling.BILINEAR)
-                if (width, height) != (64, 64):
-                    notices.append(f"Image resized from {width}×{height} to the study's 64×64 patch format; scale may differ from EuroSAT.")
+                rgb_source = source.convert("RGB")
+                if width != height:
+                    min_dim = min(width, height)
+                    left = (width - min_dim) // 2
+                    top = (height - min_dim) // 2
+                    square = rgb_source.crop((left, top, left + min_dim, top + min_dim))
+                    image = square.resize((64, 64), Image.Resampling.LANCZOS)
+                    notices.append(f"Image center-cropped ({width}×{height} → {min_dim}×{min_dim}) to maintain 1:1 aspect ratio and scaled to 64×64.")
+                elif (width, height) != (64, 64):
+                    image = rgb_source.resize((64, 64), Image.Resampling.LANCZOS)
+                    notices.append(f"Image scaled from {width}×{height} to the study's 64×64 patch format.")
+                else:
+                    image = rgb_source
     except HTTPException:
         raise
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError, Image.DecompressionBombWarning):

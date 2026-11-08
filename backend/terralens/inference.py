@@ -153,9 +153,9 @@ def analyze_image(image: Image.Image, artifacts_dir: Path, *, comparison: bool =
     warnings = ["Cluster membership describes visual similarity in the frozen study. Land cover requires separate evidence."]
     if image.size != (64, 64):
         width, height = image.size
-        warnings.append(f"Image resized from {width}×{height} to the study's 64×64 patch format. Its scale may differ from EuroSAT.")
-    if percentile >= 95:
-        warnings.append("This patch is unusually far from its assigned centroid compared with the reference group (at or above the 95th percentile).")
+        warnings.append(f"Image scaled from {width}×{height} to the study's 64×64 patch format.")
+    if percentile >= 98:
+        warnings.append(f"Visual distance from centroid is at the {percentile:.1f}th percentile of reference group patches.")
 
     result = {
         "run_id": model["reference_run_id"],

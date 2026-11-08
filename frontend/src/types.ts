@@ -11,7 +11,7 @@ export interface Metrics {
   silhouette_original: number | null;
 }
 export interface Cluster {
-  id: number; count: number; description: string; representatives: string[];
+  id: number; count: number; name?: string; description: string; representatives: string[];
   boundary_samples: string[]; feature_profile: Feature[];
 }
 export interface Run {
@@ -76,6 +76,7 @@ export interface Experiment {
 export interface Analysis {
   run_id?: string;
   cluster: number;
+  cluster_name?: string;
   cluster_description?: string;
   cohort_clusters?: number[];
   pca: XY;

@@ -2,7 +2,7 @@
 
 ## System boundaries
 
-TerraLens has an offline study pipeline and an online inspection application. The offline pipeline creates an immutable reference study and a fitted model. The application reads those artifacts, performs independent bounded experiments and applies a fitted two-group or ten-group pipeline to uploaded images.
+TerraLens has an offline study pipeline and an online inspection application. The offline pipeline creates an immutable reference study and a fitted model. The application reads those artifacts, performs independent bounded experiments and applies the fitted 10-group land-cover pipeline to uploaded images.
 
 ```mermaid
 flowchart LR

@@ -22,7 +22,7 @@ Returns `{project, dataset, preprocessing, split, quality, feature_names, featur
 ## Other endpoints
 - `GET /health` -> `{status,study_ready,version}`.
 - `GET /patches/{id}.jpg` -> anonymous JPEG, or 404.
-- `GET /audit` -> separate frozen study audit JSON (reference labels used only after fitting and selection). Supply `?run_id=pca95-k10-s42` for the ten-group comparison audit when available.
+- `GET /audit` -> separate frozen study 10-group audit JSON (reference labels used only after fitting and selection).
 - `GET /features` -> `{features:[{name,family,description}], ...}`.
 - `POST /experiments` body `{k:2..15,variance:0.9|0.95|0.99,seed:0..9999,sample_size:200..3000,tsne_perplexity:10|30|50|null}` -> `{id,status}`. Backend may cap hosted samples, explicitly advertise in `/capabilities`.
 - `GET /experiments/{id}` -> `{id,status:queued|running|completed|failed,stage,config,result?:{...run,points:[{id,pca,cluster,tsne?}],tsne?:{perplexity,trustworthiness,runtime_seconds},...},error?:string}`. An optional new t-SNE fit runs on the same retained PCA features and uses the same point IDs and existing K-Means group colours.

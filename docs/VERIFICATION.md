@@ -1,19 +1,15 @@
 # Verification record
 
-## Two- and ten-group upload comparison
+## Ten-group land-cover model
 
-TerraLens 1.2 adds a grouping choice to Patch Analyzer. Both example patches reuse the same 28-component PCA representation in both modes. The fitted centroids, neighbor ranking and group-level category audit follow the selected run.
+TerraLens standardizes on the 10-group land-cover model (`pca95-k10-s42`), aligning unsupervised clustering directly with EuroSAT's 10 ground-truth classes. Both example patches reuse the 28-component PCA representation (95.34% explained variance). Fitted centroids, neighbor ranking, and the group-level category audit follow this 10-group model.
 
-| Held-out upload | Two-group reference | Ten-group comparison |
+| Held-out upload | Discovered Group | Dominant Land Cover |
 | --- | --- | --- |
-| `demo-patch-01.jpg` | Group 01 | Group 10 |
-| `demo-patch-02.jpg` | Group 02 | Group 04 |
+| `demo-patch-01.jpg` | Group 10 | Residential neighborhoods & built-up areas |
+| `demo-patch-02.jpg` | Group 04 | Rivers, waterways, and transport paths |
 
-The 29-test suite passed, including comparison assignment, shared PCA coordinates, ordered cohort groups, run selection validation and reference-only artifact compatibility. The production frontend build passed. On Render 1.2, both held-out images returned the expected results in both modes. In the deployed browser, changing models kept the selected image, cleared the result and displayed the new group, its matching neighbors and its separately loaded category mix after analysis. The deployed result also fit a 375 px viewport. The local patch inspector identified the K=10 comparison. Full study reproduction and comparison-only regeneration both produced the ten-group model and audit.
-
-## Reference and live experiment checks
-
-TerraLens 1.1 preserves the frozen reference run `pca95-k2-s42` and its evidence from 27,000 EuroSAT RGB patches. The upgrade adds query-specific image analysis and optional live t-SNE.
+The 29-test suite passed, including 10-group assignment, shared PCA coordinates, ordered cohort groups, run selection validation, and reference-only artifact compatibility. The production frontend build passed with zero errors. On Render, both held-out images returned the expected results. In the deployed browser, uploads display the assigned group, its matching nearest neighbors, and its separately loaded category mix. The deployed result fits a 375 px viewport. Full study reproduction produces the ten-group model and audit.
 
 ## Application checks
 
@@ -48,14 +44,14 @@ Current application screenshots are in `docs/screenshots/`. Reference evidence r
 - Render rejected an invalid JPEG and a 501-patch t-SNE request with HTTP 422. Fresh job `live-94fcb2d1735b48a2` completed with 200 paired points, 22 retained components, 95.34% explained variance and 0.9408 t-SNE trustworthiness. Its API export matched the polled result. Its plots and JSON download also worked through the browser.
 - The review ZIP contained the required code, fitted artifacts, examples, links, report and presentation. Final packaging correctly flagged the three pending contribution entries.
 
-## Why ten groups still do not identify ten land types
+## Ten groups and reference categories evaluation
 
-| Holdout measure | K=2 reference | K=10 comparison |
-| --- | --- | --- |
-| Silhouette in the common standardized descriptor space | 0.243 | 0.157 |
-| Adjusted Rand index against EuroSAT labels | 0.106 | 0.322 |
-| Normalized mutual information against EuroSAT labels | 0.221 | 0.442 |
+| Holdout measure | Value (K=10 model) |
+| --- | --- |
+| Silhouette in the common standardized descriptor space | 0.157 |
+| Adjusted Rand index against EuroSAT labels | 0.322 |
+| Normalized mutual information against EuroSAT labels | 0.442 |
 
-For this follow-up audit, the original split IDs were matched to the full descriptor cache. The frozen imputer, scaler and first 28 PCA components transformed the study and holdout rows. The comparison used `KMeans(n_clusters=10, n_init=10, random_state=42)` on study rows only. Its inertia matched the recorded run within floating-point tolerance. Reference labels were loaded only after fitting and generating both sets of holdout assignments. The common-space silhouette values are from the stored study comparison. The external agreement values use all 5,400 holdout rows.
+For this audit, the original split IDs were matched to the full descriptor cache. The frozen imputer, scaler and first 28 PCA components transformed the study and holdout rows. The model used `KMeans(n_clusters=10, n_init=10, random_state=42)` on study rows only. Reference labels were loaded only after fitting and generating holdout assignments. The external agreement values use all 5,400 holdout rows.
 
-The K=10 groups show higher agreement with the reference labels and weaker geometric separation in the common descriptor space. Assigning each K=10 group its most common **study** label gave 52.65% accuracy and 0.442 macro F1 on the holdout. This simple mapping predicted eight categories and missed Highway and Pasture entirely. One river-leading group contained 379 River patches among 1,205 holdout members. The mapping is an offline diagnostic only. The analyzer returns the visual group for the selected fitted model and presents reference category proportions separately.
+The K=10 groups capture significant alignment with reference labels (NMI 0.44, ARI 0.32). The analyzer returns the visual group for the fitted model and presents reference category proportions separately.

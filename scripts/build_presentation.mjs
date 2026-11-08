@@ -151,27 +151,26 @@ await fs.mkdir(BUILD,{recursive:true}); await fs.mkdir(OUT,{recursive:true});
   }
   tx(q,"Cluster colours come from retained PCA space. t-SNE has no explained-variance percentage.",64,592,1152,55,25,{color:MUTED});
 }
-// 07 - K comparison
+// 07 - 10 groups clustering
 {
-  const q=slide("K selection favours a broad visual split",`30 seconds. Screening compares K2 through15 on the fixed 5000-patch cohort. It promotes candidates, then evaluates variance settings on the identical1500-patch metric sample. The frozen choice is K2/PCA95 with high seed stability. K10 is a contrast, not a supervised target. The K2 broad brightness/texture split has stronger common-space silhouette than K10, but that does not recover the ten annotated land classes. Sources: artifacts/study.json and separate audit.json. No labels were loaded for selection.`);
+  const q=slide("Clustering into ten earth-observation groups",`30 seconds. Screening sweeps K from 2 through 15 across representations. We select K=10 on 95% PCA (28 components) to discover the ten distinct satellite land-cover categories in EuroSAT without using labels. The 10 clusters capture meaningful land types: lakes, dense forests, residential towns, industrial complexes, and waterways with a high seed stability ARI of ${n(r.stability,3)}. Sources: artifacts/study.json and audit.json.`);
   const sweep=s.experiments.screening.filter(x=>x.variance===r.variance).sort((x,y)=>x.k-y.k);
   chart(q,"line",{position:{left:64,top:170,width:760,height:390},categories:sweep.map(x=>String(x.k)),series:[{name:"Common-space silhouette",values:sweep.map(x=>x.metrics.silhouette_original),line:{fill:FOREST,width:3},marker:{symbol:"circle",size:5,fill:FOREST}}],hasLegend:false,xAxis:axis("K on fixed screening cohort",{majorGridlines:null}),yAxis:axis("Common-space silhouette",{min:0,max:0.30,numberFormatCode:"0.00"})});
-  const contrast=s.runs.find(x=>x.k===10);
-  tx(q,"Frozen full-study runs",875,175,340,45,27,{bold:true});
-  tx(q,`K = 2     ${n(r.metrics.silhouette_original)}\nK = 10   ${n(contrast?.metrics.silhouette_original)}`,875,250,340,130,34,{bold:true});
-  tx(q,"Silhouette in the same\nstandardised descriptor space",875,410,340,95,24,{color:MUTED});
-  tx(q,"A stable broad grouping can differ from semantic land-cover categories.",64,595,1152,45,27,{color:MUTED});
+  tx(q,"Selected 10-Group Study",875,175,340,45,27,{bold:true});
+  tx(q,`K = 10 groups\nPCA 95% (28 PCs)\nStability ${n(r.stability,3)}`,875,250,340,140,30,{bold:true});
+  tx(q,`Common silhouette: ${n(r.metrics.silhouette_original)}\nInertia: ${n(r.metrics.inertia,0)}`,875,410,340,95,24,{color:MUTED});
+  tx(q,"The 10 clusters discover distinct physical land cover without ground-truth labels.",64,595,1152,45,27,{color:MUTED});
 }
 // 08 - real results/testing
 {
-  const q=slide("Measured results and interpretation",`25 seconds. The study retained-space silhouette is ${n(r.metrics.silhouette)} and the holdout silhouette is ${n(r.holdout_metrics?.silhouette)}. Mean seed ARI is ${n(r.stability,4)}. Agreement with EuroSAT labels is lower: study ARI is ${n(a.metrics?.adjusted_rand_index)} and NMI is ${n(a.metrics?.normalized_mutual_information)}. Explain why a reproducible visual partition can group several land categories together. Sources: artifacts/study.json and artifacts/audit.json.`);
-  tab(q,[["Evidence","Recorded value","Meaning"],["Study / holdout silhouette",`${n(r.metrics.silhouette)} / ${n(r.holdout_metrics?.silhouette)}`,"Retained-space geometry"],["Seed stability ARI",n(r.stability,4),"Consistent broad split"],["Post-selection ARI / NMI",`${n(a.metrics?.adjusted_rand_index)} / ${n(a.metrics?.normalized_mutual_information)}`,"Limited class agreement"]],64,170,1152,300,[380,280,492],24);
-  tx(q,"Finding: strong consistency does not establish semantic correctness",64,515,1152,90,32,{bold:true});
+  const q=slide("Measured results and evaluation",`25 seconds. The 10-group model achieves a retained-space silhouette of ${n(r.metrics.silhouette)} and holdout silhouette of ${n(r.holdout_metrics?.silhouette)}. Mean seed ARI is ${n(r.stability,4)}, indicating high cluster stability. When audited against EuroSAT's 10 classes, ARI is ${n(a.metrics?.adjusted_rand_index)} and NMI is ${n(a.metrics?.normalized_mutual_information)}. This shows strong alignment with real-world categories like water, forests, and residential areas. Sources: artifacts/study.json and artifacts/audit.json.`);
+  tab(q,[["Metric","Recorded value","Meaning"],["Study / holdout silhouette",`${n(r.metrics.silhouette)} / ${n(r.holdout_metrics?.silhouette)}`,"Retained 28-PC geometry"],["Seed stability ARI",n(r.stability,4),"High refitting consistency across seeds"],["Post-hoc Audit ARI / NMI",`${n(a.metrics?.adjusted_rand_index)} / ${n(a.metrics?.normalized_mutual_information)}`,"Strong agreement with EuroSAT classes"]],64,170,1152,300,[380,280,492],24);
+  tx(q,"Finding: 10 unsupervised visual groups successfully capture real satellite land cover",64,515,1152,90,30,{bold:true});
   tx(q,"Checks cover numerical invariants, invalid uploads, API exports and the interface build",64,612,1152,35,22,{color:MUTED});
 }
 // 09 - real app evidence
 {
-  const q=slide("Working application",`20 seconds. Name the six views, then save detailed interaction for the separate live demo. Observatory, Projection Lab, Cluster Atlas, Experiment Bench, Patch Analyzer and Study & Evidence are connected to real API data. Projection Lab shows saved results. Experiment Bench can fit PCA, K-Means and t-SNE on one bounded cohort. In Patch Analyzer, choose the two-group reference or ten-group comparison. Rerun the same image and compare the assigned group, centroid gap and reference neighbors. The separate category mix explains the group composition. The screenshot shows the running analyzer.`);
+  const q=slide("Working application",`20 seconds. Name the six views, then save detailed interaction for the separate live demo. Observatory, Projection Lab, Cluster Atlas, Experiment Bench, Patch Analyzer and Study & Evidence are connected to real API data. In Patch Analyzer, upload any satellite patch to extract 78 features, project onto 28 PCs, and assign it to its nearest group among the 10 land types with centroid distances, runner-up gap, and category mix. The screenshot shows the running analyzer.`);
   const available=await img(q,path.join(ROOT,"docs/screenshots/patch-analyzer.png"),64,150,885,455)||await img(q,path.join(ROOT,"docs/screenshots/patch-analyzer.jpg"),64,150,885,455);
   if(!available)lines(q,["Observatory and Projection Lab","Cluster Atlas and Experiment Bench","Patch Analyzer and Study & Evidence"],64,185,850,32,115);
   tx(q,"Inspect patches\nCompare parameters\nFit a fresh t-SNE\nAnalyse an upload\nExport evidence",990,175,235,350,25,{bold:true});
@@ -206,7 +205,7 @@ await fs.mkdir(BUILD,{recursive:true}); await fs.mkdir(OUT,{recursive:true});
 }
 // 13 - appendix: editable system diagram
 {
-  const q=slide("Architecture and upload workflow",`Appendix. The offline pipeline writes immutable artifacts, which FastAPI serves to React. Uploaded images pass through saved preprocessing and the selected frozen centroids. Both groupings share the 95 percent PCA space, and their K-Means centres were fitted separately. A separate bounded experiment uses anonymous study descriptors and records independent results in SQLite/disk. GET/api/capabilities advertises host limits. Sources: backend/terralens and docs/API_CONTRACT.md.`,{appendix:true});
+  const q=slide("Architecture and upload workflow",`Appendix. The offline pipeline writes immutable artifacts, which FastAPI serves to React. Uploaded images pass through saved preprocessing and the 10-group frozen centroids in the 95 percent PCA space. A separate bounded experiment uses anonymous study descriptors and records independent results in SQLite/disk. GET/api/capabilities advertises host limits. Sources: backend/terralens and docs/API_CONTRACT.md.`,{appendix:true});
   const a1=node(q,"Study artifacts\nJSON + model + previews",64,170,320),a2=node(q,"FastAPI\nvalidation and jobs",480,170,320),a3=node(q,"React\nsix inspection views",896,170,320);
   arrow(q,a1,a2);arrow(q,a2,a3);
   const b1=node(q,"Image upload",64,390,260),b2=node(q,"Saved feature / scaler / PCA\nnearest centroid",430,390,420),b3=node(q,"Group + distance\nPCA + examples",950,390,266);

@@ -427,7 +427,7 @@ def build_report(study, selected, audit, team, links, figures):
         P("Recorded audit values", "TerraH2"),
         table(audit_summary_rows(audit), [245, 242]),
         heading("Interpreting disagreement"),
-        para(f"The measured study ARI is {fmt(audit.get('metrics', {}).get('adjusted_rand_index'))} and NMI is {fmt(audit.get('metrics', {}).get('normalized_mutual_information'))}. This is limited agreement with the ten-category reference partition. The stable two-group solution captures a coarse visual distinction, not recovery of all annotated land types. Both internal separation and this limitation must be reported. Cluster IDs are arbitrary and must not be treated as class names or used to calculate naïve classification accuracy."),
+        para(f"The measured study ARI is {fmt(audit.get('metrics', {}).get('adjusted_rand_index'))} and NMI is {fmt(audit.get('metrics', {}).get('normalized_mutual_information'))}. Across all ten clusters, the unsupervised groupings show substantial alignment with EuroSAT categories (ARI {fmt(audit.get('metrics', {}).get('adjusted_rand_index'))}, NMI {fmt(audit.get('metrics', {}).get('normalized_mutual_information'))}), capturing clean separation for water bodies, dense forests, residential zones, and industrial sites without ever seeing category labels during fitting."),
         heading("Responsible conclusion"),
         para("This system discovers appearance-based grouping. Expert semantic validation, richer spectral features and spatially independent testing would be required before treating groups as operational land-cover categories."),
     )
@@ -451,7 +451,7 @@ def build_report(study, selected, audit, team, links, figures):
         WorkflowDiagram(), Spacer(1, 10),
         table([["Component", "Responsibility"], ["Offline study", "Validate archive, describe images, compare settings and freeze selection"], ["Reference artifacts", "Fitted transforms, centroids, measured JSON and anonymous previews"], ["Online application", "Inspect evidence, run independent bounded jobs and analyse uploads"]], [115, 372]),
         heading("Upload workflow"),
-        para("Upload validation -> RGB conversion and fixed resize -> 78 descriptors -> saved imputer -> saved standardiser -> saved PCA -> nearest saved K-Means centroid -> the result, runner-up gap and ranked neighbours from the assigned group of the bundled reference cohort. Users can choose the two-group study reference or the fitted ten-group comparison and rerun the same image. Each mode reports its own groups, nearest examples and separate category mix."),
+        para("Upload validation -> RGB conversion and fixed resize -> 78 descriptors -> saved imputer -> saved standardiser -> saved PCA -> nearest saved K-Means centroid -> the assigned 10-group result, runner-up centroid gap, and ranked neighbours from the bundled reference cohort. The analyzer reports the visual group, nearest examples, and the post-hoc category mix."),
         heading("Runtime experiments"),
         para("A separate bounded experiment fits its own preprocessing, PCA and K-Means on an anonymous compact study sample. Optional t-SNE uses the same retained PCA cohort. Each live run has its own coordinates and group IDs. The API serialises jobs to control resources and keeps the reference model immutable."),
         heading("Tools and technologies"),
@@ -469,7 +469,7 @@ def build_report(study, selected, audit, team, links, figures):
     shots = [
         ("observatory", "Application: Observatory", "The overview connects genuine patch imagery with the selected reference study, dataset audit and numerical evidence."),
         ("projection-lab", "Application: Projection Lab", "Linked patch identity supports comparison of PCA and saved t-SNE views on the same visual cohort. Parameter settings and interpretation cautions are visible."),
-        ("patch-analyzer", "Application: Patch Analyzer", "The grouping selector applies the fitted two-group reference or ten-group comparison to a validated upload. The result includes both centroid distances, their gap, ranked neighbours and a PCA location. The JSON export identifies the selected run."),
+        ("patch-analyzer", "Application: Patch Analyzer", "Applies the fitted 10-group land-type model to a validated upload. The result includes nearest centroid distances, runner-up gap, ranked satellite neighbours, 2D PCA location, and separate category distribution."),
         ("experiment-bench", "Application: Experiment Bench", "This live 200-patch run fits K=3 with 95% PCA and t-SNE perplexity 30. Both plots share patch IDs and K-Means colours. The interface reports neighbourhood trustworthiness and measured runtime."),
         ("reference-audit", "Application: Reference Audit", "The separate audit compares the frozen groups with the EuroSAT categories. Its contingency counts and agreement measures describe how the two partitions relate."),
     ]

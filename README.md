@@ -58,7 +58,7 @@ Precomputed reference results are explicitly identified in the interface; they a
 
 ## Try the live workflows
 
-- In **Patch Analyzer**, upload the two [held-out example patches](examples/README.md) one at a time. Analyze each image with the two-group reference, then switch to the ten-group comparison and run the same file again. Compare its group, runner-up centroid gap, ranked neighbors and the separate category mix.
+- In **Patch Analyzer**, upload the two [held-out example patches](examples/README.md) one at a time. Analyze each image with the ten-group model. Compare its assigned visual group (such as Group 10 for residential or Group 04 for waterways), runner-up centroid gap, ranked neighbors and the separate category mix.
 - In **Experiment Bench**, select K=3, 95% PCA, seed 42, 200 patches and t-SNE perplexity 30. The backend fits a fresh run and returns matched PCA and t-SNE views. The run has its own cluster numbering.
 - Read the [codebase walkthrough](docs/CODEBASE_GUIDE.md) to trace each request through the frontend, API and numerical modules.
 

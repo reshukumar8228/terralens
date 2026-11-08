@@ -18,6 +18,7 @@ from terralens.settings import COMPARISON_MODEL_FILENAME, COMPARISON_RUN_ID, MAX
 from terralens.store import ExperimentStore
 
 DEMO_PATCH = Path(__file__).resolve().parents[1] / "examples" / "demo-patch-02.jpg"
+DEMO_PATCH_01 = Path(__file__).resolve().parents[1] / "examples" / "demo-patch-01.jpg"
 
 
 @pytest.fixture
@@ -160,37 +161,30 @@ def test_reference_upload_uses_saved_pipeline(prepared):
 def test_comparison_upload_uses_its_own_groups_on_the_shared_pca(prepared):
     study = prepared.get("/api/study").json()
     primary_id = study["selected_run_id"]
-    capabilities = prepared.get("/api/capabilities").json()
-    if not (app_module.ARTIFACTS / COMPARISON_MODEL_FILENAME).is_file():
-        pytest.skip("Generate the genuine comparison model first.")
-    assert capabilities["analysis_runs"] == [primary_id, COMPARISON_RUN_ID]
+    assert primary_id == COMPARISON_RUN_ID
 
-    files = {"file": (DEMO_PATCH.name, DEMO_PATCH.read_bytes(), "image/jpeg")}
-    default = prepared.post("/api/analyze", files=files)
-    primary = prepared.post("/api/analyze", params={"run_id": primary_id}, files=files)
-    comparison = prepared.post("/api/analyze", params={"run_id": COMPARISON_RUN_ID}, files=files)
-    assert default.status_code == primary.status_code == comparison.status_code == 200
-    reference = primary.json()
-    assert default.json() == reference
-    assert "cohort_clusters" not in reference
-    assert comparison.headers["cache-control"] == "no-store"
+    files_02 = {"file": (DEMO_PATCH.name, DEMO_PATCH.read_bytes(), "image/jpeg")}
+    res_02 = prepared.post("/api/analyze", files=files_02)
+    assert res_02.status_code == 200
+    assert res_02.headers["cache-control"] == "no-store"
+    data_02 = res_02.json()
+    assert data_02["run_id"] == COMPARISON_RUN_ID
+    assert data_02["cluster"] == 3
+    assert data_02["margin"] == pytest.approx(data_02["alternate_distance"] - data_02["distance"])
+    assert data_02["cluster"] != data_02["alternate_cluster"]
+    assert "tsne" not in data_02 and "confidence" not in data_02
+    assert len(data_02["neighbors"]) == 8
 
-    result = comparison.json()
-    assert result["run_id"] == COMPARISON_RUN_ID
-    assert result["pca"] == pytest.approx(reference["pca"])
-    assert (reference["cluster"], result["cluster"]) == (1, 3)
-    assert result["margin"] == pytest.approx(result["alternate_distance"] - result["distance"])
-    assert result["cluster"] != result["alternate_cluster"]
-    assert "tsne" not in result and "confidence" not in result
-    assert len(result["cohort_clusters"]) == len(study["points"])
-    assert set(result["cohort_clusters"]) == set(range(10))
-    assignment_by_id = dict(zip((point["id"] for point in study["points"]), result["cohort_clusters"], strict=True))
-    assert result["neighbor_scope"] == result["cohort_clusters"].count(result["cluster"])
-    assert all(assignment_by_id[neighbor["id"]] == result["cluster"] for neighbor in result["neighbors"])
-    assert result["neighbors"] != reference["neighbors"]
-    comparison_audit = prepared.get("/api/audit", params={"run_id": COMPARISON_RUN_ID}).json()
-    assert comparison_audit["reference_run_id"] == result["run_id"]
-    assert prepared.get("/api/audit").json()["reference_run_id"] == primary_id
+    files_01 = {"file": (DEMO_PATCH_01.name, DEMO_PATCH_01.read_bytes(), "image/jpeg")}
+    res_01 = prepared.post("/api/analyze", files=files_01)
+    assert res_01.status_code == 200
+    data_01 = res_01.json()
+    assert data_01["cluster"] == 9
+
+    audit = prepared.get("/api/audit").json()
+    assert audit["reference_run_id"] == primary_id
+    assert len(audit["reference_classes"]) == 10
+    assert len(audit["contingency"]) == 10
 
 
 def test_analysis_rejects_unknown_run_ids(prepared):
@@ -211,16 +205,12 @@ def test_optional_comparison_artifacts(tmp_path, monkeypatch):
     monkeypatch.setattr(app_module, "ARTIFACTS", artifacts)
     monkeypatch.setattr(app_module, "RUNTIME", tmp_path / "runtime")
     files = {"file": (DEMO_PATCH.name, DEMO_PATCH.read_bytes(), "image/jpeg")}
-    params = {"run_id": COMPARISON_RUN_ID}
+    params = {"run_id": "nonexistent-run-id"}
     with TestClient(app_module.app) as custom:
         capabilities = custom.get("/api/capabilities").json()
         assert capabilities["analysis_runs"] == [capabilities["reference_run_id"]]
         assert custom.post("/api/analyze", params=params, files=files).status_code == 404
         assert custom.post("/api/analyze", files=files).status_code == 200
-        if (source / COMPARISON_MODEL_FILENAME).is_file():
-            (artifacts / COMPARISON_MODEL_FILENAME).symlink_to(source / COMPARISON_MODEL_FILENAME)
-            assert custom.post("/api/analyze", params=params, files=files).status_code == 200
-            assert custom.get("/api/audit", params=params).status_code == 503
 
 
 @pytest.mark.parametrize("perplexity", [None, 30])

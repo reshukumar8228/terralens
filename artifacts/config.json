@@ -1,1 +1,42 @@
-{"seed":42,"split":"80/20 label-blind random; deduplicated anonymous IDs","feature_version":1,"feature_count":78,"pca_variances":[0.9,0.95,0.99],"k_range":[2,15],"kmeans_n_init_screen":5,"kmeans_n_init_full":10,"full_seeds":[42,17,91],"screen_samples":5000,"metric_samples":1500,"visual_samples":3000,"trustworthiness_samples":1000,"tsne_perplexities":[10,30,50],"tsne_seeds":[42,17],"tsne_iterations":750,"tsne_initialization":"random","tsne_pre_pca_components":50,"tsne_learning_rate":"auto","selected_run_id":"pca95-k2-s42","selection_rule":"Stage 1: for each representation, choose K=2..15 maximizing silhouette in the common full standardized descriptor space on the fixed screening cohort. Stage 2: among promoted PCA90/95/99 runs, maximize the same-space silhouette on a fixed 1,500-patch study sample. Within 0.005 of the best score, prefer higher mean pairwise seed ARI, then fewer components. Unreduced and fixed K=10 comparisons do not select the reference. No reference labels are loaded until study/model artifacts and this decision are frozen.","archive_sha256":"b4f5b234ecb7d7ff9c6cddb046543b4717c53fd6e9815be6c0e80cc614f51b90"}
+{
+  "seed": 42,
+  "split": "80/20 label-blind random; deduplicated anonymous IDs",
+  "feature_version": 1,
+  "feature_count": 78,
+  "pca_variances": [
+    0.9,
+    0.95,
+    0.99
+  ],
+  "k_range": [
+    2,
+    15
+  ],
+  "kmeans_n_init_screen": 5,
+  "kmeans_n_init_full": 10,
+  "full_seeds": [
+    42,
+    17,
+    91
+  ],
+  "screen_samples": 5000,
+  "metric_samples": 1500,
+  "visual_samples": 3000,
+  "trustworthiness_samples": 1000,
+  "tsne_perplexities": [
+    10,
+    30,
+    50
+  ],
+  "tsne_seeds": [
+    42,
+    17
+  ],
+  "tsne_iterations": 750,
+  "tsne_initialization": "random",
+  "tsne_pre_pca_components": 50,
+  "tsne_learning_rate": "auto",
+  "selected_run_id": "pca95-k10-s42",
+  "selection_rule": "Stage 1: for each representation, choose K=2..15 maximizing silhouette in the common full standardized descriptor space on the fixed screening cohort. Stage 2: among promoted PCA90/95/99 runs, maximize the same-space silhouette on a fixed 1,500-patch study sample. Within 0.005 of the best score, prefer higher mean pairwise seed ARI, then fewer components. Unreduced and fixed K=10 comparisons do not select the reference. No reference labels are loaded until study/model artifacts and this decision are frozen.",
+  "archive_sha256": "b4f5b234ecb7d7ff9c6cddb046543b4717c53fd6e9815be6c0e80cc614f51b90"
+}

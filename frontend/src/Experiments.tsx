@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowClockwise, CaretDown, CaretUp, DownloadSimple, Flask, GraduationCap } from '@phosphor-icons/react';
+import { ArrowClockwise, DownloadSimple, Flask } from '@phosphor-icons/react';
 import { format, percent, request } from './api';
 import { Notice, PageTitle, Panel } from './UI';
 import ExperimentControls from './experiments/ExperimentControls';
@@ -27,7 +27,6 @@ export default function Experiments({ study, run, capabilities, selectPatch }: P
   const [activity, setActivity] = useState<'submit' | 'history' | null>(null);
   const [error, setError] = useState('');
   const [history, setHistory] = useState<Experiment[]>([]);
-  const [showPresentationGuide, setShowPresentationGuide] = useState(true);
   const activeJobId = job?.status === 'queued' || job?.status === 'running' ? job.id : null;
   const busy = Boolean(activity || activeJobId);
 
@@ -105,56 +104,6 @@ export default function Experiments({ study, run, capabilities, selectPatch }: P
       <PageTitle title="Experiment bench" text="Change the settings and measure what happens to the same sample.">
         <a className="button button-outline" href="/api/export/metrics.csv" download><DownloadSimple size={17}/>Metrics CSV</a>
       </PageTitle>
-
-      <div className="teacher-viva-section" style={{ marginTop: 0, marginBottom: '24px' }}>
-        <button
-          type="button"
-          className="teacher-viva-toggle"
-          onClick={() => setShowPresentationGuide(prev => !prev)}
-          aria-expanded={showPresentationGuide}
-        >
-          <span className="viva-badge">
-            <GraduationCap size={16} weight="bold" />
-            Teacher Viva Guide · How to present the Experiment Bench
-          </span>
-          <span style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-muted)' }}>
-            {showPresentationGuide ? 'Collapse Guide' : 'Expand Guide'}
-            {showPresentationGuide ? <CaretUp size={14} /> : <CaretDown size={14} />}
-          </span>
-        </button>
-
-        {showPresentationGuide && (
-          <div className="teacher-viva-content">
-            <div className="viva-qna-grid">
-              <div className="viva-qna-card">
-                <h5>1. What is the purpose of this Experiment Bench?</h5>
-                <p>
-                  In supervised learning, you tune hyperparameters to minimize cross-entropy loss. In unsupervised learning, there is no ground truth during training! The Experiment Bench lets us systematically evaluate how changing <strong>cluster count (K)</strong> and <strong>PCA variance retention (90% vs 95% vs 99%)</strong> alters cluster geometry, stability, and compactness.
-                </p>
-              </div>
-
-              <div className="viva-qna-card">
-                <h5>2. Why compare live runs against the frozen reference model?</h5>
-                <p>
-                  The reference model (K=10, 95% variance) was trained once on the complete 21,600-patch study cohort. The live runner computes instant fits on random subsamples (e.g. 1,000 patches). This tests sample-size robustness and convergence without requiring a multi-minute full-dataset retraining.
-                </p>
-              </div>
-
-              <div className="viva-qna-card">
-                <h5>3. How do you defend your choice of K=10 to the teacher?</h5>
-                <p>
-                  While purely mathematical metrics like Silhouette Score peak at very low K (e.g. K=2 or 3, grouping earth into just "water vs land"), such trivial partitions have zero practical remote-sensing utility. K=10 provides the optimal trade-off between statistical cohesion and land cover expressiveness across urban, agricultural, and hydrological domains.
-                </p>
-              </div>
-            </div>
-
-            <div className="viva-takeaway">
-              <strong>Key Examiner Takeaway:</strong> "Unsupervised models must never be evaluated solely by a single metric. We use the Experiment Bench to prove stability across seeds, track silhouette trajectories across K, and demonstrate reproducible separation in a shared common space."
-            </div>
-          </div>
-        )}
-      </div>
-
       <div className="experiment-grid">
         <ExperimentControls config={config} onChange={setConfig} onSubmit={() => { void startExperiment(); }}
           maximum={maximum} tsneMaximum={tsneMaximum} busy={busy} error={error}/>

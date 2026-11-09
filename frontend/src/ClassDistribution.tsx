@@ -319,10 +319,10 @@ export default function ClassDistribution() {
             <p>{activeClass.visualFeatures}</p>
           </div>
 
-          <div className="class-viva-note">
+          <div className="class-method-note">
             <Info size={16}/>
             <p>
-              <strong>Teacher Viva Note:</strong> These ground-truth labels were strictly withheld during feature scaling, PCA, and K-Means. The clustering algorithm discovered these groupings purely through visual texture and color distributions.
+              <strong>Methodology Note:</strong> These ground-truth labels were strictly withheld during feature scaling, PCA, and K-Means. The clustering algorithm discovered these groupings purely through visual texture and color distributions.
             </p>
           </div>
         </div>

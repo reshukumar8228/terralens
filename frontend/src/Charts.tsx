@@ -109,240 +109,182 @@ export const Scatter = memo(function Scatter({ points, coordinates, projection, 
   </div>;
 });
 
-export interface VarianceChartProps {
-  ratios: number[];
-  cumulative: number[];
-  threshold?: number;
-  compact?: boolean;
-  onSelectComponent?: (index: number) => void;
-  selectedComponent?: number;
-  showThresholdControls?: boolean;
-}
-
 export function VarianceChart({
   ratios,
   cumulative,
   threshold = .95,
   compact = false,
-  onSelectComponent,
-  selectedComponent,
-  showThresholdControls = true,
-}: VarianceChartProps) {
-  const [activeThreshold, setActiveThreshold] = useState(threshold);
+  showControls = true,
+  onComponentSelect,
+}: {
+  ratios: number[];
+  cumulative: number[];
+  threshold?: number;
+  compact?: boolean;
+  showControls?: boolean;
+  onComponentSelect?: (componentIndex: number) => void;
+}) {
+  const [currentThreshold, setCurrentThreshold] = useState(threshold);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-  const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
+  const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const width = 620, height = compact ? 190 : 255, left = 42, bottom = 34, top = 20, right = 18;
+  useEffect(() => {
+    setCurrentThreshold(threshold);
+  }, [threshold]);
+
+  const width = 620, height = compact ? 190 : 255, left = 42, bottom = 34, top = 22, right = 18;
   const chartW = width - left - right, chartH = height - top - bottom;
   const count = ratios.length;
-
   if (!count) return <p className="muted">No PCA measurements available.</p>;
 
   const x = (i: number) => left + (i + .5) / count * chartW;
   const y = (v: number) => top + (1 - v) * chartH;
-  const selected = Math.max(0, cumulative.findIndex(v => v >= activeThreshold));
-  const compressionPct = Math.round((1 - (selected + 1) / count) * 100);
+  const selected = Math.max(0, cumulative.findIndex(v => v >= currentThreshold));
+
+  const activeIndex = hoverIndex !== null ? hoverIndex : pinnedIndex !== null ? pinnedIndex : selected;
+  const activeX = x(activeIndex);
+  const activeY = y(cumulative[activeIndex]);
+  const activeRatio = ratios[activeIndex];
+  const activeCum = cumulative[activeIndex];
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const relX = e.clientX - rect.left;
-    const relY = e.clientY - rect.top;
-    const chartX = (relX / rect.width) * width;
-    const idx = Math.min(count - 1, Math.max(0, Math.floor((chartX - left) / chartW * count)));
+    const rect = e.currentTarget.getBoundingClientRect();
+    const svgX = ((e.clientX - rect.left) / rect.width) * width;
+    if (svgX < left || svgX > width - right) {
+      setHoverIndex(null);
+      return;
+    }
+    const idx = Math.min(count - 1, Math.max(0, Math.floor(((svgX - left) / chartW) * count)));
     setHoverIndex(idx);
-    setHoverPos({ x: relX, y: relY });
   };
 
-  const handlePointerLeave = () => {
-    setHoverIndex(null);
-    setHoverPos(null);
-  };
-
-  const handleClick = () => {
-    if (hoverIndex !== null && onSelectComponent) {
-      onSelectComponent(hoverIndex);
+  const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const svgX = ((e.clientX - rect.left) / rect.width) * width;
+    if (svgX >= left && svgX <= width - right) {
+      const idx = Math.min(count - 1, Math.max(0, Math.floor(((svgX - left) / chartW) * count)));
+      setPinnedIndex(prev => prev === idx ? null : idx);
+      if (onComponentSelect) onComponentSelect(idx);
     }
   };
 
-  const activeIdx = hoverIndex ?? (selectedComponent ?? selected);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowRight') {
+      const next = Math.min(count - 1, (pinnedIndex ?? selected) + 1);
+      setPinnedIndex(next);
+      if (onComponentSelect) onComponentSelect(next);
+    } else if (e.key === 'ArrowLeft') {
+      const prev = Math.max(0, (pinnedIndex ?? selected) - 1);
+      setPinnedIndex(prev);
+      if (onComponentSelect) onComponentSelect(prev);
+    } else if (e.key === 'Escape') {
+      setPinnedIndex(null);
+      setHoverIndex(null);
+    }
+  };
 
   return (
-    <div className="variance-interactive-shell">
-      {showThresholdControls && (
-        <div className="variance-threshold-bar" role="group" aria-label="PCA threshold selector">
-          <span className="variance-threshold-label">Select variance target:</span>
-          <div className="variance-pill-group">
-            {[0.9, 0.95, 0.99].map(t => {
-              const pcs = cumulative.findIndex(v => v >= t) + 1;
-              const isActive = Math.abs(activeThreshold - t) < 0.005;
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  className={`variance-threshold-pill ${isActive ? 'is-active' : ''}`}
-                  onClick={() => setActiveThreshold(t)}
-                  aria-pressed={isActive}
-                >
-                  <strong>{Math.round(t * 100)}%</strong>
-                  <span>({pcs} PCs)</span>
-                </button>
-              );
-            })}
-          </div>
-          <span className="compression-stat-chip">
-            <strong>{compressionPct}%</strong> compressed
-          </span>
+    <div className="variance-chart-shell" tabIndex={0} onKeyDown={handleKeyDown} aria-label="Interactive PCA variance chart">
+      {!compact && showControls && (
+        <div className="threshold-chips" role="group" aria-label="PCA retained variance target">
+          <span className="chips-label">Variance cutoff:</span>
+          {[0.90, 0.95, 0.99].map(target => (
+            <button
+              key={target}
+              type="button"
+              className={`threshold-chip ${currentThreshold === target ? 'is-active' : ''}`}
+              onClick={() => {
+                setCurrentThreshold(target);
+                setPinnedIndex(null);
+              }}
+            >
+              {Math.round(target * 100)}% ({cumulative.findIndex(v => v >= target) + 1} PCs)
+              {target === 0.95 ? ' · Reference' : ''}
+            </button>
+          ))}
+          {pinnedIndex !== null && (
+            <button type="button" className="threshold-chip chip-reset" onClick={() => setPinnedIndex(null)}>
+              Reset to threshold
+            </button>
+          )}
         </div>
       )}
 
-      <div className="variance-svg-wrap">
-        <svg
-          ref={svgRef}
-          className="variance-chart interactive-chart"
-          viewBox={`0 0 ${width} ${height}`}
-          role="img"
-          aria-label={`Interactive PCA variance chart. ${selected + 1} components retain at least ${Math.round(activeThreshold * 100)} percent variance.`}
-          onPointerMove={handlePointerMove}
-          onPointerLeave={handlePointerLeave}
-          onClick={handleClick}
-          style={{ cursor: onSelectComponent ? 'pointer' : 'crosshair' }}
+      <svg
+        ref={svgRef}
+        className="variance-chart interactive-chart"
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={`PCA variance chart. Component ${activeIndex + 1} explains ${percent(activeRatio, 2)} variance, reaching ${percent(activeCum, 1)} cumulative.`}
+        onPointerMove={handlePointerMove}
+        onPointerLeave={() => setHoverIndex(null)}
+        onPointerDown={handlePointerDown}
+      >
+        {[0, .25, .5, .75, 1].map(v => (
+          <g key={v}>
+            <line x1={left} x2={width - right} y1={y(v)} y2={y(v)} className="chart-grid"/>
+            <text x={left - 9} y={y(v) + 3} textAnchor="end">{v * 100}%</text>
+          </g>
+        ))}
+
+        {ratios.map((v, i) => {
+          const isActive = i === activeIndex;
+          const barW = Math.max(1, chartW / count * .68);
+          return (
+            <rect
+              key={i}
+              x={x(i) - barW / 2}
+              y={y(v)}
+              width={barW}
+              height={Math.max(0, chartH * v)}
+              className={`variance-bar ${isActive ? 'is-active' : ''}`}
+            />
+          );
+        })}
+
+        <polyline points={cumulative.map((v, i) => `${x(i)},${y(v)}`).join(' ')} className="variance-line"/>
+        <line x1={left} x2={width - right} y1={y(currentThreshold)} y2={y(currentThreshold)} className="threshold-line"/>
+
+        <circle cx={x(selected)} cy={y(cumulative[selected])} r="4.5" className="variance-marker"/>
+        <text
+          x={Math.min(x(selected) + 9, width - 110)}
+          y={Math.max(y(cumulative[selected]) - 9, 14)}
+          className="chart-annotation"
         >
-          {/* Background Grid Lines */}
-          {[0, .25, .5, .75, 1].map(v => (
-            <g key={v}>
-              <line x1={left} x2={width - right} y1={y(v)} y2={y(v)} className="chart-grid"/>
-              <text x={left - 9} y={y(v) + 3} textAnchor="end">{v * 100}%</text>
-            </g>
-          ))}
+          {selected + 1} PCs · {percent(currentThreshold, 0)}
+        </text>
 
-          {/* Individual Explained Variance Bars */}
-          {ratios.map((v, i) => {
-            const isHovered = hoverIndex === i;
-            const isTarget = selected === i;
-            const isSelectedComp = selectedComponent === i;
-            return (
-              <rect
-                key={i}
-                x={x(i) - chartW / count * .36}
-                y={y(v)}
-                width={Math.max(1.2, chartW / count * .72)}
-                height={Math.max(0, chartH * v)}
-                className={`variance-bar ${isHovered ? 'bar-hover' : ''} ${isTarget ? 'bar-target' : ''} ${isSelectedComp ? 'bar-active-pc' : ''}`}
-              />
-            );
-          })}
-
-          {/* Cumulative Explained Variance Curve */}
-          <polyline
-            points={cumulative.map((v, i) => `${x(i)},${y(v)}`).join(' ')}
-            className="variance-line"
-          />
-
-          {/* Active Threshold Horizontal Guideline */}
-          <line
-            x1={left}
-            x2={width - right}
-            y1={y(activeThreshold)}
-            y2={y(activeThreshold)}
-            className="threshold-line"
-          />
-
-          {/* Selected Threshold Anchor Marker */}
-          <circle cx={x(selected)} cy={y(cumulative[selected])} r="4.5" className="variance-marker"/>
-          <text
-            x={Math.min(x(selected) + 9, width - 110)}
-            y={Math.max(y(cumulative[selected]) - 9, 14)}
-            className="chart-annotation"
-          >
-            {selected + 1} PCs · {percent(activeThreshold, 0)}
-          </text>
-
-          {/* Hover Pointer Scrubbing Guide Line & Marker */}
-          {hoverIndex !== null && (
-            <g className="hover-elements">
-              <line
-                x1={x(hoverIndex)}
-                x2={x(hoverIndex)}
-                y1={top}
-                y2={top + chartH}
-                className="hover-guide-line"
-              />
-              <circle
-                cx={x(hoverIndex)}
-                cy={y(cumulative[hoverIndex])}
-                r="5"
-                className="hover-curve-marker"
-              />
-              <circle
-                cx={x(hoverIndex)}
-                cy={y(ratios[hoverIndex])}
-                r="3.5"
-                className="hover-bar-marker"
-              />
-            </g>
-          )}
-
-          {/* X-Axis Dimension Milestone Ticks */}
-          {[0, Math.floor(count / 4), Math.floor(count / 2), Math.floor(count * 3 / 4), count - 1]
-            .filter((v, i, a) => a.indexOf(v) === i)
-            .map(i => (
-              <text key={i} x={x(i)} y={height - 12} textAnchor="middle">
-                PC {i + 1}
+        {(hoverIndex !== null || pinnedIndex !== null) && (
+          <g className="active-inspection-group">
+            <line x1={activeX} x2={activeX} y1={top} y2={top + chartH} className="variance-hover-line"/>
+            <circle cx={activeX} cy={activeY} r="5.5" className="variance-active-dot"/>
+            <g transform={`translate(${Math.min(Math.max(activeX - 65, left + 4), width - right - 135)}, ${Math.max(activeY - 32, top + 4)})`}>
+              <rect width="135" height="25" rx="4" className="variance-tooltip-bg"/>
+              <text x="8" y="16" className="variance-tooltip-text">
+                PC {String(activeIndex + 1).padStart(2, '0')}: {percent(activeRatio, 2)} · {percent(activeCum, 1)} Σ
               </text>
-            ))}
-        </svg>
-
-        {/* Floating Tooltip */}
-        {hoverIndex !== null && hoverPos && (
-          <div
-            className="variance-tooltip"
-            style={{
-              left: Math.min(Math.max(hoverPos.x + 12, 10), 440),
-              top: Math.max(hoverPos.y - 75, 10),
-            }}
-          >
-            <div className="tooltip-title">
-              <strong>Principal Component {hoverIndex + 1}</strong>
-              <span className={`tooltip-tag ${hoverIndex <= selected ? 'tag-retained' : 'tag-cut'}`}>
-                {hoverIndex <= selected ? 'Retained in model' : 'Excluded noise'}
-              </span>
-            </div>
-            <div className="tooltip-metrics">
-              <div>
-                <span>Explained variance:</span>
-                <code>{percent(ratios[hoverIndex], 2)}</code>
-              </div>
-              <div>
-                <span>Cumulative total:</span>
-                <code>{percent(cumulative[hoverIndex], 2)}</code>
-              </div>
-            </div>
-            {onSelectComponent && (
-              <div className="tooltip-action-hint">Click to inspect feature loadings for PC {hoverIndex + 1}</div>
-            )}
-          </div>
+            </g>
+          </g>
         )}
-      </div>
 
-      {/* Interactive Readout Summary Footer */}
-      <div className="variance-readout-footer">
-        <div className="readout-stat">
-          <span>Active PC:</span>
-          <strong>PC {activeIdx + 1}</strong>
-          <small>{percent(ratios[activeIdx], 2)} individual</small>
-        </div>
-        <div className="readout-stat">
-          <span>Cumulative Variance:</span>
-          <strong>{percent(cumulative[activeIdx], 2)}</strong>
-          <small>{activeIdx + 1} of {count} dimensions</small>
-        </div>
-        <div className="readout-stat">
-          <span>Dimensional Reduction:</span>
-          <strong>{Math.round((1 - (activeIdx + 1) / count) * 100)}%</strong>
-          <small>{count - (activeIdx + 1)} features eliminated</small>
-        </div>
+        {[0, Math.floor(count / 4), Math.floor(count / 2), Math.floor(count * 3 / 4), count - 1]
+          .filter((v, i, a) => a.indexOf(v) === i)
+          .map(i => <text key={i} x={x(i)} y={height - 12} textAnchor="middle">{i + 1}</text>)}
+      </svg>
+
+      <div className="variance-interactive-hud">
+        <span>
+          <strong>PC {String(activeIndex + 1).padStart(2, '0')}</strong>: explains{' '}
+          <code>{percent(activeRatio, 2)}</code> variance · Cumulative: <code>{percent(activeCum, 1)}</code>
+        </span>
+        <span className="hud-context">
+          {activeIndex === selected ? (
+            <span className="threshold-tag">★ 95% Reference Cutoff ({selected + 1} PCs)</span>
+          ) : (
+            <span>{count - (activeIndex + 1)} dimensions pruned (-{percent(1 - (activeIndex + 1) / count, 0)})</span>
+          )}
+        </span>
       </div>
     </div>
   );
@@ -350,48 +292,41 @@ export function VarianceChart({
 
 export function MetricLine({ data, selectedK }: { data: { k: number; value: number | null }[]; selectedK?: number }) {
   const [hoveredK, setHoveredK] = useState<number | null>(null);
-  const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
-
   const filtered = data.filter((p): p is { k: number; value: number } => p.value != null && Number.isFinite(p.value));
   if (filtered.length < 2) return <p className="muted">At least two runs are needed for a comparison.</p>;
-
-  const width = 600, height = 240, left = 45, right = 24, top = 25, bottom = 32;
+  const width = 600, height = 245, left = 45, right = 24, top = 25, bottom = 32;
   const minX = Math.min(...filtered.map(p => p.k)), maxX = Math.max(...filtered.map(p => p.k));
   const min = Math.min(...filtered.map(p => p.value)), max = Math.max(...filtered.map(p => p.value));
   const pad = Math.max((max - min) * .15, .015), low = min - pad, high = max + pad;
   const x = (n: number) => left + (n - minX) / (maxX - minX || 1) * (width - left - right);
   const y = (n: number) => top + (1 - (n - low) / (high - low)) * (height - top - bottom);
 
+  const activePoint = filtered.find(p => p.k === (hoveredK ?? selectedK)) ?? filtered.find(p => p.k === selectedK) ?? filtered[0];
+
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const relX = (e.clientX - rect.left) / rect.width * width;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const svgX = ((e.clientX - rect.left) / rect.width) * width;
     let closestK = filtered[0].k;
-    let closestDist = Math.abs(x(closestK) - relX);
-    for (const p of filtered) {
-      const dist = Math.abs(x(p.k) - relX);
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestK = p.k;
+    let minDiff = Infinity;
+    for (const pt of filtered) {
+      const diff = Math.abs(x(pt.k) - svgX);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestK = pt.k;
       }
     }
     setHoveredK(closestK);
-    setHoverPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
-  const hoveredPoint = filtered.find(p => p.k === hoveredK);
-
   return (
-    <div className="metric-line-shell" style={{ position: 'relative' }}>
+    <div className="metric-chart-shell">
       <svg
-        ref={svgRef}
         className="metric-chart interactive-chart"
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label="Interactive silhouette score curve across cluster values"
+        aria-label="Silhouette scores by number of clusters"
         onPointerMove={handlePointerMove}
-        onPointerLeave={() => { setHoveredK(null); setHoverPos(null); }}
+        onPointerLeave={() => setHoveredK(null)}
       >
         {[0, 1, 2, 3].map(i => {
           const value = low + (high - low) * i / 3;
@@ -403,6 +338,11 @@ export function MetricLine({ data, selectedK }: { data: { k: number; value: numb
           );
         })}
         <polyline points={filtered.map(p => `${x(p.k)},${y(p.value)}`).join(' ')} className="variance-line"/>
+
+        {hoveredK !== null && activePoint && (
+          <line x1={x(activePoint.k)} x2={x(activePoint.k)} y1={top} y2={height - bottom} className="variance-hover-line"/>
+        )}
+
         {filtered.map(p => {
           const isSelected = p.k === selectedK;
           const isHovered = p.k === hoveredK;
@@ -411,36 +351,31 @@ export function MetricLine({ data, selectedK }: { data: { k: number; value: numb
               <circle
                 cx={x(p.k)}
                 cy={y(p.value)}
-                r={isSelected ? 6 : isHovered ? 5.5 : 3.5}
-                className={isSelected ? 'variance-marker' : isHovered ? 'metric-dot-hover' : 'metric-dot'}
+                r={isHovered ? 6.5 : isSelected ? 5.5 : 3.5}
+                className={isSelected ? 'variance-marker' : isHovered ? 'variance-active-dot' : 'metric-dot'}
               />
-              <text x={x(p.k)} y={height - 10} textAnchor="middle" style={{ fontWeight: isSelected || isHovered ? 700 : 400 }}>
-                {p.k}
-              </text>
+              <text x={x(p.k)} y={height - 10} textAnchor="middle">{p.k}</text>
             </g>
           );
         })}
+
+        {activePoint && (
+          <g transform={`translate(${Math.min(Math.max(x(activePoint.k) - 50, left + 4), width - right - 110)}, ${Math.max(y(activePoint.value) - 30, top + 4)})`}>
+            <rect width="115" height="24" rx="4" className="variance-tooltip-bg"/>
+            <text x="8" y="15" className="variance-tooltip-text">
+              K={activePoint.k}: {format(activePoint.value, 3)} s
+            </text>
+          </g>
+        )}
       </svg>
-      {hoveredPoint && hoverPos && (
-        <div
-          className="variance-tooltip"
-          style={{
-            left: Math.min(Math.max(hoverPos.x + 10, 10), 420),
-            top: Math.max(hoverPos.y - 65, 8),
-          }}
-        >
-          <div className="tooltip-title">
-            <strong>K = {hoveredPoint.k} Clusters</strong>
-            {hoveredPoint.k === selectedK && <span className="tooltip-tag tag-retained">Reference Model</span>}
-          </div>
-          <div className="tooltip-metrics">
-            <div>
-              <span>Common-space Silhouette:</span>
-              <code>{format(hoveredPoint.value, 4)}</code>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="metric-interactive-hud">
+        <span>
+          <strong>K = {activePoint.k}</strong> visual groups · Common silhouette: <code>{format(activePoint.value, 4)}</code>
+        </span>
+        {activePoint.k === selectedK && (
+          <span className="threshold-tag">★ Reference Model (Optimal Balance)</span>
+        )}
+      </div>
     </div>
   );
 }

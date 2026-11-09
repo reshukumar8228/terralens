@@ -784,680 +784,651 @@ dialog::backdrop { background: var(--color-scrim); }
 
 .inspector-run-label { display: block; font-family: var(--font-mono); font-size: 8px; color: var(--color-accent); margin-top: 5px; }
 
-/* ==========================================================================
-   Interactive Variance & Pedagogical Exploration
-   ========================================================================== */
 
-.variance-interactive-shell {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.variance-threshold-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--color-rule);
-}
-
-.variance-threshold-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.variance-pill-group {
-  display: inline-flex;
-  gap: 4px;
-  background: var(--color-paper-2);
-  padding: 2px;
-  border-radius: var(--radius-sm);
-}
-
-.variance-threshold-pill {
-  border: 0;
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 3px;
-  color: var(--color-muted);
-  transition: all 0.15s ease;
-}
-
-.variance-threshold-pill:hover {
-  color: var(--color-ink);
-  background: var(--color-paper-3);
-}
-
-.variance-threshold-pill.active {
-  background: var(--color-accent);
-  color: var(--color-on-forest);
-  font-weight: 600;
-}
-
-.compression-stat-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--color-forest);
-  background: var(--color-accent-soft);
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-}
-
-.variance-chart-svg {
-  width: 100%;
-  height: auto;
-  cursor: crosshair;
-  touch-action: none;
-}
-
-.hover-guide-line {
-  stroke: var(--color-ink);
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
-  opacity: 0.65;
-  pointer-events: none;
-}
-
-.hover-curve-marker {
-  fill: var(--color-forest);
-  stroke: var(--color-paper);
-  stroke-width: 2.5;
-  pointer-events: none;
-}
-
-.bar-hover {
-  fill: var(--color-forest) !important;
-  opacity: 0.95;
-}
-
-.bar-target {
-  fill: var(--color-accent);
-}
-
-.bar-active-pc {
-  fill: var(--color-amber) !important;
-}
-
-.variance-tooltip {
-  position: absolute;
-  z-index: 10;
-  background: var(--color-forest-deep);
-  color: var(--color-on-forest);
-  border: 1px solid var(--color-forest-light);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  font-size: 11px;
-  box-shadow: 0 4px 14px var(--color-shadow);
-  pointer-events: none;
-  transform: translate(-50%, -105%);
-  min-width: 170px;
-}
-
-.variance-tooltip-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--color-forest-light);
-  padding-bottom: 4px;
-  margin-bottom: 6px;
-}
-
-.variance-tooltip-pc {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  color: var(--color-lime);
-}
-
-.variance-tooltip-retained {
-  font-size: 9px;
-  color: var(--color-on-forest-muted);
-}
-
-.variance-tooltip-metrics {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.variance-tooltip-row {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: 10px;
-}
-
-.variance-tooltip-row.highlight {
-  color: var(--color-lime);
-  font-weight: 600;
-}
-
-.variance-tooltip-hint {
-  display: block;
-  margin-top: 6px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--color-forest-light);
-  font-size: 9px;
-  color: var(--color-on-forest-faint);
-  text-align: center;
-}
-
-.variance-readout-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  padding: 6px 0 0;
-  color: var(--color-muted);
-}
-
-.variance-footer-stat {
-  font-family: var(--font-mono);
-}
-
-.variance-footer-stat strong {
-  color: var(--color-ink);
-}
-
-.variance-footer-tip {
-  font-size: 10px;
-  font-style: italic;
-  color: var(--color-faint);
-}
-
-/* ==========================================================================
-   Class Distribution Breakdown (Total 27,000 Patches)
-   ========================================================================== */
-
+/* -------------------------------------------------------------
+   Class Distribution Breakdown & Interactive Charts Styles
+   ------------------------------------------------------------- */
 .class-distribution-panel {
-  background: var(--color-surface);
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-md);
-  padding: var(--space-xl);
-  margin: var(--space-2xl) 0;
-  box-shadow: 0 2px 8px var(--color-shadow);
+  margin-top: 24px;
 }
 
-.distribution-header-context {
-  margin-bottom: var(--space-lg);
-}
-
-.distribution-header-context h4 {
-  font-size: var(--text-base);
-  font-weight: 700;
-  color: var(--color-ink);
-  margin-bottom: 4px;
-}
-
-.distribution-header-context p {
-  font-size: var(--text-sm);
-  color: var(--color-muted);
-  line-height: 1.5;
-}
-
-.cohort-filter-pills {
-  display: inline-flex;
-  gap: 4px;
-  background: var(--color-paper-2);
-  padding: 3px;
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-lg);
-}
-
-.cohort-pill {
-  border: 0;
-  background: transparent;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--color-muted);
-  padding: 5px 12px;
-  border-radius: 3px;
-  transition: all 0.15s ease;
-}
-
-.cohort-pill:hover {
-  color: var(--color-ink);
-  background: var(--color-paper-3);
-}
-
-.cohort-pill.active {
-  background: var(--color-forest);
-  color: var(--color-on-forest);
-  font-weight: 600;
-}
-
-.distribution-stats-strip {
+.class-summary-banner {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 12px;
-  margin-bottom: var(--space-xl);
-  padding: 12px 16px;
-  background: var(--color-paper);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-rule);
-}
-
-.dist-stat {
-  display: flex;
-  flex-direction: column;
-}
-
-.dist-stat .stat-num {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-ink);
-  line-height: 1.2;
-}
-
-.dist-stat .stat-lbl {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-muted);
-  margin-top: 2px;
-}
-
-.distribution-spectrum-bar {
-  display: flex;
-  width: 100%;
-  height: 16px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  margin-bottom: var(--space-xl);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.spectrum-segment {
-  height: 100%;
-  cursor: pointer;
-  transition: filter 0.15s ease, opacity 0.15s ease;
-}
-
-.spectrum-segment:hover {
-  filter: brightness(1.18);
-  opacity: 1 !important;
-}
-
-.distribution-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
-  margin-bottom: var(--space-xl);
-}
-
-.distribution-card {
-  position: relative;
-  background: var(--color-paper);
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px 12px 16px;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  text-align: left;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.distribution-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--color-shadow);
-  border-color: var(--color-accent);
-}
-
-.distribution-card.selected {
-  border-color: var(--color-forest);
   background: var(--color-surface);
-  box-shadow: 0 0 0 2px var(--color-forest), 0 6px 16px var(--color-shadow);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 20px;
 }
 
-.card-color-strip {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 5px;
-}
-
-.card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.card-title-group {
+.class-summary-banner > div {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
-.card-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-ink);
-}
-
-.card-macro {
+.class-summary-banner span {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-muted);
 }
 
-.card-count-badge {
-  text-align: right;
-}
-
-.card-pct {
-  font-family: var(--font-mono);
-  font-size: 14px;
+.class-summary-banner strong {
+  font-size: 22px;
   font-weight: 700;
-  color: var(--color-accent);
+  color: var(--color-ink);
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
-.card-count {
-  display: block;
-  font-size: 9px;
+.class-summary-banner small {
+  font-size: 11px;
+  font-weight: 500;
   color: var(--color-muted);
 }
 
-.card-spectral-signature {
-  font-size: 10px;
-  line-height: 1.4;
-  color: var(--color-body);
-  background: var(--color-paper-2);
-  padding: 6px 8px;
-  border-radius: 3px;
+/* Proportional segmented ribbon */
+.class-ribbon-wrap {
+  margin-bottom: 24px;
 }
 
-.sig-label {
+.class-ribbon {
+  display: flex;
+  height: 24px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px var(--color-shadow);
+  border: 1px solid var(--color-rule);
+}
+
+.class-ribbon-segment {
+  height: 100%;
+  cursor: pointer;
+  transition: opacity var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out);
+  position: relative;
+}
+
+.class-ribbon-segment:hover,
+.class-ribbon-segment.is-selected {
+  opacity: 0.92;
+  filter: brightness(1.12);
+  transform: scaleY(1.15);
+  z-index: 2;
+}
+
+.class-ribbon-legend {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+}
+
+/* 2-Column Inspector Layout */
+.class-inspector-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.class-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.class-item-row {
+  display: grid;
+  grid-template-columns: auto 150px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  transition: all var(--dur-short) var(--ease-out);
+}
+
+.class-item-row:hover {
+  background: var(--color-paper-2);
+  border-color: var(--color-accent);
+}
+
+.class-item-row.is-selected {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.class-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.class-identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.class-identity strong {
+  font-size: 12px;
+  color: var(--color-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.class-identity small {
+  font-size: 10px;
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+}
+
+.class-meter-track {
+  height: 6px;
+  background: var(--color-paper-3);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.class-meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.class-numbers {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+}
+
+.class-numbers strong {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--color-ink);
+}
+
+.class-numbers small {
+  font-size: 10px;
+  color: var(--color-muted);
+}
+
+/* Class Detail Card */
+.class-detail-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.class-detail-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.class-badge {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.class-detail-header h3 {
+  font-size: 18px;
   font-weight: 700;
+  margin: 2px 0 4px;
+  color: var(--color-ink);
+}
+
+.class-detail-header p {
+  font-size: 12px;
+  color: var(--color-body);
+  line-height: 1.45;
+}
+
+.class-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: var(--color-paper);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-rule);
+}
+
+.class-metrics-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.class-metrics-grid span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+.class-metrics-grid strong {
+  font-size: 15px;
+  color: var(--color-ink);
+}
+
+.class-metrics-grid small {
+  font-size: 10px;
+  color: var(--color-muted);
+}
+
+.class-feature-highlight {
+  padding: 12px;
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-sm);
+  border: 1px solid oklch(85% 0.04 165);
+}
+
+.highlight-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-bottom: 4px;
+}
+
+.class-feature-highlight p {
+  font-size: 11px;
+  color: var(--color-body);
+  line-height: 1.45;
+}
+
+.class-viva-note {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  background: var(--color-amber-soft);
+  border: 1px solid oklch(88% 0.06 80);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--color-body);
+  line-height: 1.45;
+}
+
+.class-viva-note svg {
+  color: var(--color-amber);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* -------------------------------------------------------------
+   Interactive Variance & Metric Chart Styles
+   ------------------------------------------------------------- */
+.variance-chart-shell,
+.metric-chart-shell {
+  position: relative;
+  width: 100%;
+  outline: none;
+}
+
+.interactive-chart {
+  cursor: crosshair;
+  user-select: none;
+}
+
+.threshold-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.chips-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--color-muted);
   margin-right: 4px;
 }
 
-.card-mapped-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--color-muted);
-  margin-top: auto;
-}
-
-.group-indicator-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-
-.distribution-inspector-card {
+.threshold-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 14px;
   background: var(--color-paper-2);
-  border: 1px solid var(--color-forest-light);
-  border-radius: var(--radius-sm);
-  padding: 16px 20px;
-  margin-bottom: var(--space-xl);
+  border: 1px solid var(--color-rule);
+  color: var(--color-body);
+  transition: all var(--dur-short) var(--ease-out);
 }
 
-.inspector-header {
+.threshold-chip:hover {
+  background: var(--color-paper-3);
+  color: var(--color-ink);
+}
+
+.threshold-chip.is-active {
+  background: var(--color-forest);
+  color: var(--color-on-forest);
+  border-color: var(--color-forest);
+}
+
+.threshold-chip.chip-reset {
+  background: transparent;
+  border-color: dashed var(--color-rule);
+  font-size: 10px;
+  color: var(--color-muted);
+}
+
+.threshold-chip.chip-reset:hover {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.variance-bar {
+  fill: var(--color-chart-soft);
+  transition: fill var(--dur-short) var(--ease-out);
+}
+
+.variance-bar.is-active {
+  fill: var(--color-accent);
+}
+
+.variance-hover-line {
+  stroke: var(--color-forest);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+
+.variance-active-dot {
+  fill: var(--color-accent);
+  stroke: var(--color-paper);
+  stroke-width: 2;
+  filter: drop-shadow(0 1px 3px var(--color-shadow));
+}
+
+.variance-tooltip-bg {
+  fill: var(--color-forest-deep);
+  opacity: 0.96;
+}
+
+.variance-tooltip-text {
+  fill: var(--color-on-forest);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.variance-interactive-hud,
+.metric-interactive-hud {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--color-rule);
-  padding-bottom: 10px;
-  margin-bottom: 12px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--color-body);
 }
 
-.inspector-title-row {
+.hud-context {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-muted);
+}
+
+.threshold-tag {
+  color: var(--color-forest);
+  font-weight: 700;
+}
+
+.metric-dot {
+  fill: var(--color-chart-soft);
+  transition: all var(--dur-short) var(--ease-out);
+}
+
+/* -------------------------------------------------------------
+   Projection Lab Physical Loadings & Viva Guide
+   ------------------------------------------------------------- */
+.pc-interpretation-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pc-interpretation-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-forest);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pc-var-badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.pc-meaning {
+  font-size: 12px;
+  color: var(--color-body);
+  line-height: 1.45;
+}
+
+.pc-contrast {
+  font-size: 11px;
+  color: var(--color-muted);
+  line-height: 1.45;
+  background: var(--color-paper);
+  padding: 8px;
+  border-radius: 4px;
+}
+
+/* Viva Defense Accordion & Cards */
+.viva-defense-panel {
+  margin-top: 24px;
+  background: var(--color-surface);
+}
+
+.viva-chip {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.viva-defense-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.viva-card {
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper);
+  overflow: hidden;
+  transition: all var(--dur-short) var(--ease-out);
+}
+
+.viva-card.is-expanded {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+  box-shadow: 0 2px 6px var(--color-shadow);
+}
+
+.viva-card-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: none;
+  border: 0;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.viva-card-title {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.inspector-meta-tag {
-  font-family: var(--font-mono);
-  font-size: 10px;
+.viva-icon {
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.viva-card-content {
+  padding: 4px 16px 16px 44px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--color-body);
+}
+
+.viva-card-content p {
+  margin-bottom: 8px;
+}
+
+.viva-card-content ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.viva-card-content li strong {
+  color: var(--color-ink);
+}
+
+/* -------------------------------------------------------------
+   Experiment Bench Metric Switcher & Explainer
+   ------------------------------------------------------------- */
+.metric-chip-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.metric-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 14px;
+  background: var(--color-paper-2);
+  border: 1px solid var(--color-rule);
+  color: var(--color-body);
+  transition: all var(--dur-short) var(--ease-out);
+}
+
+.metric-chip:hover {
+  background: var(--color-paper-3);
+  color: var(--color-ink);
+}
+
+.metric-chip.is-active {
   background: var(--color-forest);
   color: var(--color-on-forest);
-  padding: 2px 8px;
-  border-radius: 3px;
+  border-color: var(--color-forest);
 }
 
-.inspector-body-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+.metric-explainer-banner {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.inspector-block h5 {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-muted);
-  margin-bottom: 4px;
-  font-family: var(--font-mono);
-}
-
-.inspector-block p {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--color-body);
-}
-
-.teacher-viva-section {
-  margin-top: var(--space-xl);
-  border-top: 1px solid var(--color-rule);
-  padding-top: 14px;
-}
-
-.teacher-viva-toggle {
-  width: 100%;
+.explainer-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: none;
-  border: 0;
-  padding: 8px 0;
-  cursor: pointer;
-  color: var(--color-ink);
-}
-
-.viva-badge {
-  display: inline-flex;
-  align-items: center;
   gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--color-forest);
-  background: var(--color-accent-soft);
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
 }
 
-.teacher-viva-content {
-  margin-top: 14px;
-}
-
-.viva-qna-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 14px;
-  margin-bottom: 14px;
-}
-
-.viva-qna-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-}
-
-.viva-qna-card h5 {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-forest);
-  margin-bottom: 6px;
-  line-height: 1.4;
-}
-
-.viva-qna-card p {
+.explainer-viva {
   font-size: 11px;
   color: var(--color-body);
-  line-height: 1.55;
-}
-
-.viva-takeaway {
-  background: var(--color-forest-deep);
-  color: var(--color-on-forest);
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  line-height: 1.6;
-}
-
-.viva-takeaway strong {
-  color: var(--color-lime);
-}
-
-/* ==========================================================================
-   Projection Lab & Experiment Bench Defense Styles
-   ========================================================================== */
-
-.viva-defense-panel {
-  background: var(--color-surface);
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-md);
-  padding: 18px 20px;
-  margin: 20px 0;
-}
-
-.viva-defense-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 14px;
-  margin-top: 12px;
-}
-
-.viva-card {
-  background: var(--color-paper);
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-}
-
-.viva-card h4 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-forest);
-  margin-bottom: 6px;
-}
-
-.viva-card p {
-  font-size: 11px;
   line-height: 1.5;
-  color: var(--color-body);
+  background: var(--color-paper);
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin: 0;
 }
 
-.viva-formula-badge {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 9px;
+.reference-takeaway-card {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px;
+  background: var(--color-accent-soft);
+  border: 1px solid oklch(85% 0.04 165);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--color-body);
+  line-height: 1.45;
+}
+
+.reference-takeaway-card .check-icon {
   color: var(--color-accent);
-  background: var(--color-accent-soft);
-  padding: 2px 6px;
-  border-radius: 2px;
-  margin-top: 6px;
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
-.component-physical-card {
-  background: var(--color-paper-2);
-  border-left: 3px solid var(--color-accent);
-  padding: 10px 14px;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  margin-top: 12px;
+@media (max-width: 900px) {
+  .class-inspector-grid {
+    grid-template-columns: 1fr;
+  }
+  .viva-card-content {
+    padding-left: 16px;
+  }
 }
-
-.pca-pedagogical-callout {
-  background: var(--color-accent-soft);
-  border: 1px solid var(--color-accent);
-  border-radius: var(--radius-sm);
-  padding: 12px 16px;
-  margin: 14px 0;
-  font-size: 11px;
-  color: var(--color-ink);
-}
-
-.metrics-defense-panel {
-  background: var(--color-surface);
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-md);
-  padding: 20px;
-  margin: 24px 0;
-}
-
-.metrics-explanation-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
-  margin-top: 14px;
-}
-
-.metric-guide-card {
-  background: var(--color-paper);
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-}
-
-.metric-guide-card h4 {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-forest);
-  margin-bottom: 6px;
-}
-
-.metric-guide-card p {
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--color-body);
-}
-
-.metric-math {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  background: var(--color-paper-2);
-  padding: 4px 8px;
-  border-radius: 3px;
-  margin: 8px 0;
-  color: var(--color-ink);
-  display: block;
-}
-
-.k-selection-insight {
-  background: var(--color-paper-2);
-  border-left: 3px solid var(--color-forest);
-  padding: 12px 16px;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  margin-top: 14px;
-  font-size: 11px;
-}
-

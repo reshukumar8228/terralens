@@ -18,13 +18,22 @@ An interactive research workbench for a reproducible, label-blind EuroSAT study.
 
 - Python 3.12 (or `uv`, which can provision it), Node.js 24 LTS and npm, Git.
 - Approximately 1 GB free space for setup; additional working space for the full dataset and study. Internet is required for dependencies and the original dataset download. The installed local application uses bundled reference artifacts without external APIs.
-- macOS, Linux, or Windows through WSL. On native Windows run the equivalent commands in PowerShell using `.venv\\Scripts\\python.exe`.
+- macOS, Linux, or Windows (WSL or native). On native Windows, you can run `scripts\setup.bat` and `scripts\start.bat` directly.
 
 ## Install and run
+
+macOS / Linux / WSL:
 
 ```bash
 ./scripts/setup.sh
 ./scripts/start.sh
+```
+
+Windows (Command Prompt / PowerShell):
+
+```cmd
+scripts\setup.bat
+scripts\start.bat
 ```
 
 Open <http://127.0.0.1:8000>. Interactive API documentation: <http://127.0.0.1:8000/docs>.

@@ -62,9 +62,18 @@ For the code explanation, answer four questions for each example. What did we se
 
 Run from the project directory. [README](../README.md) lists prerequisites and deployment settings.
 
+macOS / Linux / WSL:
+
 ```bash
 ./scripts/setup.sh
 ./scripts/start.sh
+```
+
+Windows (Command Prompt / PowerShell):
+
+```cmd
+scripts\setup.bat
+scripts\start.bat
 ```
 
 Open `http://127.0.0.1:8000`. Run the scientific and API checks and build the frontend from a second terminal:

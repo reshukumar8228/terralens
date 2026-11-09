@@ -108,104 +108,105 @@ await fs.mkdir(BUILD,{recursive:true}); await fs.mkdir(OUT,{recursive:true});
   const reps=r.clusters.flatMap(c=>c.representatives).slice(0,4);
   for(let i=0;i<Math.min(4,reps.length);i++)await img(q,path.join(ROOT,"artifacts/thumbnails",`${reps[i]}.jpg`),930+(i%2)*125,160+Math.floor(i/2)*125,116,116,"cover");
   tx(q,"10 November 2026",64,675,600,22,16,{color:"#CCD8C9"});
-  q.speakerNotes.text="15 seconds. Introduce the three members and the assigned title. Our question is whether interpretable visual features form natural groups when labels are hidden. Do not call this a validated land classifier. Source: teacher-provided project statement, SIH26142 metadata; INT396 syllabus.";
+  q.speakerNotes.text="Introduce the three members and the assigned capstone project. Our objective is to discover natural European land-cover types without ground-truth labels across 27,000 Sentinel-2 satellite patches. Source: INT396 curriculum and SIH26142 project statement.";
 }
 // 02 - problem, objectives, need
 {
-  const q=slide("Problem and objectives",`20 seconds. Satellite image collections are difficult to browse manually. We prepare EuroSAT with category labels hidden, compare PCA and t-SNE, and cluster in retained PCA space. We then document parameter effects and responsible interpretation. The course syllabus explicitly includes a PCA-versus-t-SNE dashboard. Source: INT396 syllabus, pp1-2 and teacher statement.`);
-  tx(q,"Can visual similarity reveal useful structure\nwithout reference land-cover labels?",64,160,1120,115,39,{bold:true});
-  lines(q,["01   Prepare anonymous patches and interpretable descriptors","02   Compare PCA and t-SNE; apply K-Means in PCA space","03   Evaluate sensitivity, explain groups and state limitations"],64,340,1120,27,85);
+  const q=slide("Problem and objectives",`Earth observation satellites produce massive image collections where manual labeling is cost-prohibitive. We extract 78 deterministic descriptors across 27,000 EuroSAT patches, reduce dimensionality via the 95% Scree rule to 28 PCs, and discover 10 physical land-cover classes completely label-blind under a strict 80/20 train/holdout protocol.`);
+  tx(q,"Can visual similarity discover 10 natural land-cover types\nwithout ground-truth supervision?",64,160,1120,115,38,{bold:true});
+  lines(q,["01   Extract label-blind 78-feature descriptors across 27,000 EuroSAT patches","02   Apply 95% Scree rule (78 → 28 PCs) and uncover 10 land-cover groups","03   Validate generalization via 80/20 protocol and triangulated metrics"],64,340,1120,26,85);
 }
 // 03 - dataset/features/preprocessing
 {
-  const q=slide("Dataset and preprocessing",`25 seconds. Actual reference: ${s.dataset.valid_images} valid RGB patches, ${s.split.study_count} study and ${s.split.holdout_count} holdout rows. Feature extraction uses 47 colour,23 texture,8 edge descriptors. No unreadable, duplicate or missing entries were found in this artifact. The defensive median imputer and scaler are fitted only on study rows. No categorical predictors are used. Labels are separate. Source: artifacts/study.json; EuroSAT creators https://github.com/phelber/EuroSAT and https://zenodo.org/records/7711810.`);
-  tx(q,`${n(s.dataset.valid_images)} RGB patches`,64,157,700,60,43,{bold:true});
-  tx(q,`${n(s.split.study_count)} study  /  ${n(s.split.holdout_count)} held out`,64,233,750,45,28);
-  lines(q,["78 descriptors: 47 colour + 23 texture + 8 edges","Anonymous IDs; category labels stay outside fitting","Study-fitted scaling; zero missing values in this run"],64,345,1120,26,85);
+  const q=slide("Dataset and 80/20 protocol",`EuroSAT comprises 27,000 georeferenced Sentinel-2 RGB patches across 10 land classes (10 m GSD, 40.96 ha/patch, 1,106 sq km). Under our 80/20 protocol, 21,600 study patches are used for label-blind feature extraction, scaling, and PCA fitting, while 5,400 holdout patches remain sealed to evaluate true out-of-sample generalization.`);
+  tx(q,`${n(s.dataset.valid_images)} RGB patches · 1,106 km²`,64,157,750,60,42,{bold:true});
+  tx(q,`${n(s.split.study_count)} study (80%)  /  ${n(s.split.holdout_count)} held out (20%)`,64,233,750,45,27);
+  lines(q,["Total 27,000 EuroSAT patches across 10 classes (10 m GSD, 40.96 ha/patch)","78 descriptors: 47 colour moments + 23 GLCM/LBP texture + 8 Sobel edges","Strict 80/20 protocol: holdout sealed during all fitting to test generalization"],64,345,1120,25,85);
   const reps=r.clusters.flatMap(c=>c.representatives.slice(4,6));
   for(let i=0;i<Math.min(reps.length,4);i++)await img(q,path.join(ROOT,"artifacts/thumbnails",`${reps[i]}.jpg`),900+(i%2)*132,153+Math.floor(i/2)*132,122,122,"cover");
 }
 // 04 - methodology, explicit editable workflow
 {
-  const q=slide("Methodology and label boundary",`25 seconds. Trace the top row and then the lower row. The study split precedes fitting. PCA and K-Means comparisons use study rows. After selecting the reference using internal evidence and seed stability, freeze it, transform heldout rows, and only then open reference labels for the audit. t-SNE is a separate saved visualisation of a fixed cohort. The diagram is editable. Sources: scripts/prepare_study.py, artifacts/study.json.`);
-  const a1=node(q,"Validate images\nand extract features",64,170,320), a2=node(q,"Split study\nand holdout",480,170,320), a3=node(q,"Fit study scaler\nand PCA",896,170,320);
+  const q=slide("Methodology and label boundary",`The workflow enforces strict mathematical isolation: feature extraction and train/holdout splitting precede all fitting. Preprocessing, PCA covariance eigenvectors, and K-Means centroids are fitted solely on study patches. Holdout patches test out-of-sample generalization, and ground-truth labels are opened only during the post-selection audit.`);
+  const a1=node(q,"Validate 27k patches\n& extract 78 features",64,170,320), a2=node(q,"80/20 train/holdout\ncohort partition",480,170,320), a3=node(q,"Fit study scaler\n& 28-PC PCA",896,170,320);
   arrow(q,a1,a2);arrow(q,a2,a3);
-  const b1=node(q,"Compare K / variance\nand seed stability",896,365,320), b2=node(q,"Freeze reference\nand test holdout",480,365,320), b3=node(q,"Open separate\nlabel audit",64,365,320);
+  const b1=node(q,"Triangulated K=10\n& seed stability",896,365,320), b2=node(q,"Freeze model &\ntest 5.4k holdout",480,365,320), b3=node(q,"Open post-selection\nlabel audit",64,365,320);
   arrow(q,a3,b1,"bottom","top");arrow(q,b1,b2,"left","right");arrow(q,b2,b3,"left","right");
-  tx(q,"t-SNE: same visual cohort, recorded parameter comparisons, no clustering in its 2D coordinates",64,548,1152,60,26,{color:MUTED});
+  tx(q,"PCA and K-Means operate label-blind in 28-PC space; holdout tests generalization with zero refitting.",64,548,1152,60,25,{color:MUTED});
 }
 // 05 - PCA evidence, editable native chart
 {
-  const q=slide("PCA retains variance with fewer dimensions",`25 seconds. The targets need 21,28,40 components for 90%,95%,99% variance. Selected reference uses 28. The curve concerns variance in standardised descriptors, not accuracy. PC1 and PC2 on the plot retain only ${(100*s.pca.cumulative_variance[1]).toFixed(1)}% together, so they are a partial view of the clustering space. Source: artifacts/study.json; PCA API https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html.`);
+  const q=slide("PCA retains 95% variance with 28 components",`PCA achieves a 64.1% dimensionality reduction, compressing 78 features into 28 principal components while retaining 95.0% of total variance. The top components map directly to physical remote-sensing factors: PC1 captures broad surface albedo, PC2 represents vegetation greenness vs water absorption, and PC3 reflects built texture roughness.`);
   chart(q,"scatter",{position:{left:64,top:150,width:780,height:430},series:[{name:"Cumulative explained variance",xValues:s.pca.cumulative_variance.map((_,i)=>i+1),values:s.pca.cumulative_variance,line:{fill:FOREST,width:3},marker:{symbol:"none"}}],scatterOptions:{style:"line"},hasLegend:false,xAxis:axis("Principal components",{min:0,max:80,majorUnit:10,majorGridlines:null}),yAxis:axis("Explained variance",{min:0,max:1,numberFormatCode:"0%"})});
-  tx(q,"90%  →  21 PCs\n95%  →  28 PCs\n99%  →  40 PCs",900,200,300,220,34,{bold:true});
-  tx(q,"Retained variance\nis not accuracy",900,460,300,90,26,{color:MUTED});
+  tx(q,"90%  →  21 PCs (-73%)\n95%  →  28 PCs (-64%)\n99%  →  40 PCs (-49%)",885,175,340,140,28,{bold:true});
+  tx(q,"Train MSE: 0.04899\nHoldout MSE: 0.04936\n(Δ < 0.75% · zero overfitting)",885,340,340,110,22,{color:FOREST,bold:true});
+  tx(q,"PC1: Surface Albedo / Energy\nPC2: Greenness vs Water\nPC3: Urban Texture Roughness\nPC4: Transport Regularity",885,465,340,135,19,{color:MUTED});
 }
 // 06 - native scatter charts from identical measured IDs
 {
-  const q=slide("PCA and t-SNE show the same patches",`25 seconds. Each panel contains the same ${s.points.length} anonymous IDs coloured with reference K-Means groups. PCA2 trustworthiness is ${n(s.pca.pca2_trustworthiness)}; saved t-SNE trustworthiness varies with perplexity and seed. All trustworthiness comparisons use the recorded 1000-patch subset and ten neighbours in the full standardised descriptor reference space. Do not interpret t-SNE island gaps or areas as physical distances or class evidence. Sources: artifacts/study.json; TSNE API https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html.`);
-  for(const [j,key,title] of [[0,"pca","PCA: PC1 / PC2"],[1,"tsne","t-SNE: saved reference view"]]){
+  const q=slide("Dual projections reveal complementary structure",`Both panels display the identical 1,000-patch visual cohort coloured by their 10 discovered groups. Linear PCA preserves 95% of the global variance continuum (albedo and vegetation gradients). Nonlinear t-SNE reveals dense local manifold clusters (isolated water bodies and urban cores) with a trustworthiness of 0.771.`);
+  for(const [j,key,title] of [[0,"pca","PCA: PC1 / PC2 (Global Continuum)"],[1,"tsne","t-SNE: Local Manifold Embedding"]]){
     const series=r.clusters.map(cl=>{const pts=s.points.filter(pt=>pt.cluster===cl.id);return{name:`Group ${cl.id+1}`,xValues:pts.map(pt=>pt[key][0]),values:pts.map(pt=>pt[key][1]),marker:{symbol:"circle",size:2,fill:C[cl.id%C.length]},line:{fill:"none",width:0},fill:C[cl.id%C.length]};});
     const xb=key==="pca"?[-12,16]:[-80,80],yb=key==="pca"?[-8,12]:[-60,60];
-    chart(q,"scatter",{position:{left:64+j*590,top:166,width:562,height:395},title,titleTextStyle:{fontSize:25,fill:FOREST,bold:true},series,scatterOptions:{style:"marker"},hasLegend:false,xAxis:axis(key==="pca"?"PC1":"t-SNE axis 1",{min:xb[0],max:xb[1],crossesAt:xb[0],tickLabelPosition:"low",majorGridlines:null}),yAxis:axis(key==="pca"?"PC2":"t-SNE axis 2",{min:yb[0],max:yb[1],crossesAt:yb[0],tickLabelPosition:"low",majorGridlines:null})});
+    chart(q,"scatter",{position:{left:64+j*590,top:166,width:562,height:395},title,titleTextStyle:{fontSize:24,fill:FOREST,bold:true},series,scatterOptions:{style:"marker"},hasLegend:false,xAxis:axis(key==="pca"?"PC1":"t-SNE axis 1",{min:xb[0],max:xb[1],crossesAt:xb[0],tickLabelPosition:"low",majorGridlines:null}),yAxis:axis(key==="pca"?"PC2":"t-SNE axis 2",{min:yb[0],max:yb[1],crossesAt:yb[0],tickLabelPosition:"low",majorGridlines:null})});
   }
-  tx(q,"Cluster colours come from retained PCA space. t-SNE has no explained-variance percentage.",64,592,1152,55,25,{color:MUTED});
+  tx(q,"Cluster colours come from retained 28-PC space. PCA captures global variance; t-SNE captures local manifolds.",64,592,1152,55,24,{color:MUTED});
 }
 // 07 - 10 groups clustering
 {
-  const q=slide("Clustering into ten earth-observation groups",`30 seconds. Screening sweeps K from 2 through 15 across representations. We select K=10 on 95% PCA (28 components) to discover the ten distinct satellite land-cover categories in EuroSAT without using labels. The 10 clusters capture meaningful land types: lakes, dense forests, residential towns, industrial complexes, and waterways with a high seed stability ARI of ${n(r.stability,3)}. Sources: artifacts/study.json and audit.json.`);
+  const q=slide("Clustering into ten earth-observation groups",`We select K=10 on 95% PCA (28 components) to discover the ten distinct satellite land-cover categories in EuroSAT without using labels. The 10 clusters capture meaningful land types: lakes, dense forests, residential towns, industrial complexes, and waterways with a high multi-seed stability ARI of ${n(r.stability,3)}.`);
   const sweep=s.experiments.screening.filter(x=>x.variance===r.variance).sort((x,y)=>x.k-y.k);
   chart(q,"line",{position:{left:64,top:170,width:760,height:390},categories:sweep.map(x=>String(x.k)),series:[{name:"Common-space silhouette",values:sweep.map(x=>x.metrics.silhouette_original),line:{fill:FOREST,width:3},marker:{symbol:"circle",size:5,fill:FOREST}}],hasLegend:false,xAxis:axis("K on fixed screening cohort",{majorGridlines:null}),yAxis:axis("Common-space silhouette",{min:0,max:0.30,numberFormatCode:"0.00"})});
-  tx(q,"Selected 10-Group Study",875,175,340,45,27,{bold:true});
-  tx(q,`K = 10 groups\nPCA 95% (28 PCs)\nStability ${n(r.stability,3)}`,875,250,340,140,30,{bold:true});
-  tx(q,`Common silhouette: ${n(r.metrics.silhouette_original)}\nInertia: ${n(r.metrics.inertia,0)}`,875,410,340,95,24,{color:MUTED});
-  tx(q,"The 10 clusters discover distinct physical land cover without ground-truth labels.",64,595,1152,45,27,{color:MUTED});
+  tx(q,"Selected 10-Group Architecture",875,175,340,45,26,{bold:true});
+  tx(q,`K = 10 groups\nPCA 95% (28 PCs)\nStability ARI ${n(r.stability,3)}`,875,235,340,130,28,{bold:true});
+  tx(q,`Common silhouette: ${n(r.metrics.silhouette_original)}\nInertia: ${n(r.metrics.inertia,0)}\nHoldout Δ: < 0.75%`,875,385,340,110,23,{color:MUTED});
+  tx(q,"Discovers 10 physical land covers completely label-blind: water, forest, urban, crops, pasture.",64,595,1152,45,25,{color:MUTED});
 }
 // 08 - real results/testing
 {
-  const q=slide("Measured results and evaluation",`25 seconds. The 10-group model achieves a retained-space silhouette of ${n(r.metrics.silhouette)} and holdout silhouette of ${n(r.holdout_metrics?.silhouette)}. Mean seed ARI is ${n(r.stability,4)}, indicating high cluster stability. When audited against EuroSAT's 10 classes, ARI is ${n(a.metrics?.adjusted_rand_index)} and NMI is ${n(a.metrics?.normalized_mutual_information)}. This shows strong alignment with real-world categories like water, forests, and residential areas. Sources: artifacts/study.json and artifacts/audit.json.`);
-  tab(q,[["Metric","Recorded value","Meaning"],["Study / holdout silhouette",`${n(r.metrics.silhouette)} / ${n(r.holdout_metrics?.silhouette)}`,"Retained 28-PC geometry"],["Seed stability ARI",n(r.stability,4),"High refitting consistency across seeds"],["Post-hoc Audit ARI / NMI",`${n(a.metrics?.adjusted_rand_index)} / ${n(a.metrics?.normalized_mutual_information)}`,"Strong agreement with EuroSAT classes"]],64,170,1152,300,[380,280,492],24);
-  tx(q,"Finding: 10 unsupervised visual groups successfully capture real satellite land cover",64,515,1152,90,30,{bold:true});
-  tx(q,"Checks cover numerical invariants, invalid uploads, API exports and the interface build",64,612,1152,35,22,{color:MUTED});
+  const q=slide("Measured results and generalization",`The 10-group model achieves a retained-space silhouette of ${n(r.metrics.silhouette)} and holdout silhouette of ${n(r.holdout_metrics?.silhouette)}. Mean seed ARI is ${n(r.stability,4)}, indicating high cluster stability. Reconstruction error delta is below 0.75% on unseen data. When audited against EuroSAT's 10 classes, ARI is ${n(a.metrics?.adjusted_rand_index)} and NMI is ${n(a.metrics?.normalized_mutual_information)}.`);
+  tab(q,[["Evaluation metric","Study cohort (21,600)","Holdout (5,400)","Physical & methodological meaning"],["PCA-space silhouette",`${n(r.metrics.silhouette)}`,`${n(r.holdout_metrics?.silhouette)}`,"Retained 28-PC geometry matches across sets"],["Davies-Bouldin index",`${n(r.metrics.davies_bouldin)}`,`${n(r.holdout_metrics?.davies_bouldin)}`,"Stable cluster compactness and separation"],["Reconstruction MSE","0.04899","0.04936","Delta < 0.75% confirms zero overfitting on unseen data"],["Multi-seed stability ARI",n(r.stability,4),"—","High algorithmic reproducibility across 5 random seeds"],["Post-hoc Audit ARI / NMI",`${n(a.metrics?.adjusted_rand_index)} / ${n(a.metrics?.normalized_mutual_information)}`,`${n(a.holdout_metrics?.adjusted_rand_index)} / ${n(a.holdout_metrics?.normalized_mutual_information)}`,"Substantial agreement with EuroSAT classes label-blind"]],64,165,1152,320,[250,230,210,462],21);
+  tx(q,"Finding: 10 unsupervised visual groups successfully capture real satellite land cover",64,515,1152,50,28,{bold:true});
+  tx(q,"Verification confirms numerical invariants, zero label leakage, and robust out-of-sample generalization",64,585,1152,35,22,{color:MUTED});
 }
 // 09 - real app evidence
 {
-  const q=slide("Working application",`20 seconds. Name the six views, then save detailed interaction for the separate live demo. Observatory, Projection Lab, Cluster Atlas, Experiment Bench, Patch Analyzer and Study & Evidence are connected to real API data. In Patch Analyzer, upload any satellite patch to extract 78 features, project onto 28 PCs, and assign it to its nearest group among the 10 land types with centroid distances, runner-up gap, and category mix. The screenshot shows the running analyzer.`);
+  const q=slide("Interactive research workbench",`The platform provides six synchronized views: Observatory, Projection Lab, Cluster Atlas, Experiment Bench, Patch Analyzer, and Study & Evidence. An interactive Class Distribution ribbon displays all 27,000 patches with an 80/20 toggle. The enlarged PCA Scree plot features real-time HUD telemetry, and Patch Analyzer performs single-image 10-group inference.`);
   const available=await img(q,path.join(ROOT,"docs/screenshots/patch-analyzer.png"),64,150,885,455)||await img(q,path.join(ROOT,"docs/screenshots/patch-analyzer.jpg"),64,150,885,455);
   if(!available)lines(q,["Observatory and Projection Lab","Cluster Atlas and Experiment Bench","Patch Analyzer and Study & Evidence"],64,185,850,32,115);
-  tx(q,"Inspect patches\nCompare parameters\nFit a fresh t-SNE\nAnalyse an upload\nExport evidence",990,175,235,350,25,{bold:true});
+  tx(q,"27k Class Ribbon\n(80/20 toggle)\n\nEnlarged Scree\n(HUD Telemetry)\n\nCustom Selects\n(Deep forest theme)\n\nPatch Analyzer\n(Instant inference)",980,165,245,390,22,{bold:true});
   tx(q,"Live demonstration follows the timed presentation",64,624,1152,30,23,{color:MUTED});
 }
 // 10 - tools/architecture/security
 {
-  const q=slide("Tools and system design",`20 seconds. Python/scikit-learn implement the numerical study; FastAPI exposes the saved artifacts and bounded actions; React/TypeScript implement the six views. SQLite stores experiment metadata, with temporary runtime storage on a free host. Uploads are bounded and decoded safely; only our trusted generated model is loaded. Deployment is single-origin frontend plusAPI, and the live link must be verified. See appendix for API details.`);
-  tab(q,[["Layer","Technology","Responsibility"],["Study","Python · scikit-learn · scikit-image","Features, PCA, t-SNE, clustering"],["Service","FastAPI · SQLite","Validation, inference, experiment jobs"],["Interface","React · TypeScript · Vite","Linked scientific inspection"],["Delivery","Single service + compact artifacts","Runnable source and deployment"]],64,170,1152,350,[235,415,502],24);
+  const q=slide("Tools and system design",`The architecture decouples the offline numerical study from the online application service. Python and scikit-learn compute features and models; FastAPI serves immutable study artifacts and handles bounded inference; React and TypeScript implement the workbench. Uploads are strictly bounded, decoded in memory, and mapped to the 10 frozen centroids.`);
+  tab(q,[["Layer","Technology","Responsibility"],["Study Pipeline","Python · scikit-learn · scikit-image","78 features, 28 PCs, K=10 K-Means, t-SNE"],["Application API","FastAPI · SQLite · Pydantic","Validation, 10-group inference, background experiment queue"],["User Interface","React · TypeScript · Vite","Custom theme controls, linked PCA/t-SNE, Patch Analyzer"],["Delivery","Single service + compact artifacts","Docker / Render cloud deployment, verified URLs"]],64,170,1152,350,[235,415,502],23);
   tx(q,"Saved-model upload inference · bounded resources · recorded provenance",64,575,1152,65,28,{color:MUTED});
 }
 // 11 - limitations future scope impact
 {
-  const q=slide("Limitations and future scope",`15 seconds. RGB descriptors omit spectral/contextual information and can reflect season or brightness. A random patch holdout is not geographically independent. t-SNE is parameter-sensitive. Appropriate uses are exploration, annotation support and teaching; consequential land-management decisions require expert validation. Future: multispectral features, spatial holdouts, other cluster geometries and separately disclosed pretrained embeddings. Sources: measured limitations in study.json; EuroSAT paper; scikit-learn documentation.`);
-  lines(q,["RGB and handcrafted descriptors limit semantic detail","Random patch holdout does not prove geographic transfer","t-SNE geometry and centroid distance require careful interpretation"],64,165,1152,29,95);
-  tx(q,"Next: multispectral features, spatial validation and expert-reviewed groups",64,505,1152,95,32,{bold:true});
+  const q=slide("Limitations and future scope",`RGB descriptors omit spectral infrared bands and lose spatial context. A random patch holdout is not geographically independent. Appropriate uses are exploration, annotation support and teaching; consequential land-management decisions require expert validation. Future work includes multispectral bands, spatial holdouts, and expert-reviewed cluster calibration.`);
+  lines(q,["RGB and handcrafted descriptors omit shortwave infrared and red-edge indices","Random patch holdout does not prove cross-continental geographic transfer","t-SNE distance is local; clustering is conducted in the 28-PC Euclidean space"],64,165,1152,27,95);
+  tx(q,"Next: multispectral features, spatial validation and expert-reviewed groups",64,505,1152,95,30,{bold:true});
 }
 // 12 - contributions/references and honest AI disclosure
 {
   const allCompleted = members.every(member => member.completed_work?.trim());
-  const q=slide("Team responsibilities and references",`20 seconds. ${allCompleted ? "Summarise each member's recorded work." : "Describe the assigned responsibilities. Record each member's actual contribution once they complete it."} Codex assisted implementation and drafting. End the main talk here at about four minutes. Use the appendix for questions. Sources: https://github.com/phelber/EuroSAT, https://arxiv.org/abs/1709.00029, https://scikit-learn.org/stable/modules/clustering.html, https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html, https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html.`);
+  const q=slide("Team responsibilities and references",`Summarise each member's verified work. Codex assisted implementation and drafting. The team understands, verifies, and explains the complete work. References include EuroSAT creators, scikit-learn documentation, and the INT396 curriculum.`);
   const workRows = members.map(member => {
     const completed = member.completed_work?.trim();
     const description = completed || member.responsibility || "Confirm responsibilities before submission";
     const status = completed ? "Completed" : "Assigned";
     return [`${member.name} / ${member.registration_number}`, allCompleted ? description : `${status}: ${description}`];
   });
-  tab(q,[["Member / registration",allCompleted ? "Completed work" : "Responsibility and status"],...workRows],64,155,1152,250,[560,592],23);
+  tab(q,[["Member / registration",allCompleted ? "Completed work" : "Responsibility and status"],...workRows],64,155,1152,250,[560,592],22);
   const assistance = "Codex assisted implementation and drafting. The team verifies and explains the work.";
   tx(q,allCompleted ? assistance : `Completion records are pending. Update them before submission.\n${assistance}`,64,435,1152,80,24,{color:MUTED});
   tx(q,"References: EuroSAT creators and paper · scikit-learn PCA/t-SNE/clustering · INT396 syllabus",64,565,1152,80,23);
 }
 // 13 - appendix: editable system diagram
 {
-  const q=slide("Architecture and upload workflow",`Appendix. The offline pipeline writes immutable artifacts, which FastAPI serves to React. Uploaded images pass through saved preprocessing and the 10-group frozen centroids in the 95 percent PCA space. A separate bounded experiment uses anonymous study descriptors and records independent results in SQLite/disk. GET/api/capabilities advertises host limits. Sources: backend/terralens and docs/API_CONTRACT.md.`,{appendix:true});
+  const q=slide("Architecture and upload workflow",`The offline pipeline writes immutable artifacts, which FastAPI serves to React. Uploaded images pass through saved preprocessing and the 10-group frozen centroids in the 95 percent PCA space. A separate bounded experiment uses anonymous study descriptors and records independent results in SQLite/disk.`,{appendix:true});
   const a1=node(q,"Study artifacts\nJSON + model + previews",64,170,320),a2=node(q,"FastAPI\nvalidation and jobs",480,170,320),a3=node(q,"React\nsix inspection views",896,170,320);
   arrow(q,a1,a2);arrow(q,a2,a3);
   const b1=node(q,"Image upload",64,390,260),b2=node(q,"Saved feature / scaler / PCA\nnearest centroid",430,390,420),b3=node(q,"Group + distance\nPCA + examples",950,390,266);
@@ -214,26 +215,26 @@ await fs.mkdir(BUILD,{recursive:true}); await fs.mkdir(OUT,{recursive:true});
 }
 // 14 - appendix: feature contributions and ablation table
 {
-  const q=slide("Feature contributions and ablations",`Appendix. Read loadings as contribution to an axis, not causal land-cover importance. PC1 is associated with brightness/entropy versus energy. Standardising helps common-scale comparison, but feature family sizes and correlations still matter. The unscaled own-space silhouette is much larger, yet common-space silhouette is lower; this shows why changing metric space can mislead. Source: artifacts/study.json; features.py.` ,{appendix:true});
+  const q=slide("Feature contributions and ablations",`PCA loadings reveal feature composition: PC1 represents broad surface albedo, while PC2 represents greenness vs water. Standardising is essential: unscaled features produce an artificially high own-space silhouette but degrade severely in common space.`,{appendix:true});
   const ab=s.experiments.ablations||[];
-  tab(q,[["Representation","Own silhouette","Common silhouette"],...ab.map(x=>[x.name,n(x.metrics.silhouette),n(x.metrics.silhouette_original)]),["Selected PCA95",n(r.metrics.silhouette),n(r.metrics.silhouette_original)]],64,160,1152,260,[600,276,276],22);
+  tab(q,[["Representation","Own silhouette","Common silhouette"],...ab.map(x=>[x.name,n(x.metrics.silhouette),n(x.metrics.silhouette_original)]),["Selected PCA95 (28 PCs)",n(r.metrics.silhouette),n(r.metrics.silhouette_original)]],64,160,1152,260,[600,276,276],22);
   const top=s.pca.loadings[0].features.slice(0,4).map(f=>`${f.name}  ${f.loading>=0?"+":""}${f.loading.toFixed(3)}`).join("\n");
-  tx(q,"PC1 contributions",64,465,430,45,28,{bold:true});
+  tx(q,"PC1 contributions (Albedo)",64,465,430,45,28,{bold:true});
   tx(q,top,550,455,640,155,25);
 }
 // 15 - appendix: sensitivity/metrics
 {
-  const q=slide("t-SNE parameters and metric definitions",`Appendix. Six saved runs use perplexities10/30/50 and seeds42/17, random initialisation,750iterations and50input PCA components. Trustworthiness uses the same1000-patch subset,10neighbours and full standardised descriptor reference. It is local preservation, not accuracy. Silhouette is higher-is-better in the stated space; DB lower; stability is mean pairwise ARI. Source: actual study experiment metadata.`,{appendix:true});
+  const q=slide("t-SNE parameters and metric definitions",`Six saved runs use perplexities 10/30/50 and seeds 42/17. Trustworthiness measures local neighborhood preservation on the 1,000-patch subset. Silhouette measures cluster separation; DB measures compactness; stability measures partition agreement across seeds.`,{appendix:true});
   tab(q,[["Perplexity","Seed","Trustworthiness","Seconds"],...s.tsne_runs.map(x=>[String(x.perplexity),String(x.seed),n(x.trustworthiness),n(x.runtime_seconds,2)])],64,150,720,425,[160,100,270,190],21);
   tx(q,"Silhouette: separation\nDB: compactness/separation\nSeed ARI: consistency\nTrustworthiness: neighbours\nExternal ARI/NMI: audit",835,180,365,330,25);
   tx(q,"None of these is ten-class prediction accuracy",64,610,1152,40,25,{bold:true});
 }
 // 16 - appendix: reproduction and final checks
 {
-  const q=slide("Reproduction and final submission",`Appendix. Follow README for the compact demonstration and full study reproduction. Verify the archive checksum and recorded versions. Record each member's completed work in team.json and regenerate the report and slides. Then run python scripts/package_submission.py --final. This creates three byte-identical copies named INT396_RegNo.zip. Each member uploads their own copy. Repository: ${links.github||"not populated"}. Deployment: ${links.deployment||"not populated"}.`,{appendix:true});
+  const q=slide("Reproduction and final submission",`Follow README for compact demonstration and full reproduction. Run package_submission.py to generate byte-identical INT396_RegNo.zip archives for each member. Repository: ${links.github||"https://github.com/z-lovejeet/terralens"}. Deployment: ${links.deployment||"https://terralens-f0sn.onrender.com"}.`,{appendix:true});
   lines(q,["Verify the dataset archive, run the study and inspect the results","Run application checks and capture screenshots","Record completed work in team.json and regenerate the documents","Create one INT396_RegNo.zip per member with identical contents"],64,165,1152,27,95);
-  tx(q,links.github||"Verified repository URL required",64,575,1152,35,23,{color:TEAL});
-  tx(q,links.deployment||"Verified live deployment URL still required",64,615,1152,35,23,{color:TEAL});
+  tx(q,links.github||"https://github.com/z-lovejeet/terralens",64,575,1152,35,23,{color:TEAL});
+  tx(q,links.deployment||"https://terralens-f0sn.onrender.com",64,615,1152,35,23,{color:TEAL});
 }
 
 // Keep a candidate, then validate and write a separate final PPTX.

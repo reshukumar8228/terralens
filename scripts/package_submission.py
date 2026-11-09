@@ -75,10 +75,11 @@ def main():
             slides = ROOT / "output/presentation/TerraLens_Presentation.pptx"
             if slides.exists():
                 with zipfile.ZipFile(slides) as deck:
-                    cover = deck.read("ppt/slides/slide1.xml").decode()
-                    contributions = deck.read("ppt/slides/slide12.xml").decode()
+                    all_slides_xml = " ".join(
+                        deck.read(name).decode() for name in deck.namelist() if name.startswith("ppt/slides/slide") and name.endswith(".xml")
+                    )
                 pending_slides = ("Record actual completed work before submission", "Completion records are pending")
-                if any(registration not in cover for registration in registrations) or any(marker in contributions for marker in pending_slides):
+                if any(registration not in all_slides_xml for registration in registrations) or any(marker in all_slides_xml for marker in pending_slides):
                     missing.append("Regenerate the presentation after recording team details and actual contributions.")
         except ImportError:
             missing.append("Install requirements-dev.txt to verify the generated documents.")

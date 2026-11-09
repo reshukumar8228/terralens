@@ -133,7 +133,9 @@ export function VarianceChart({
     setCurrentThreshold(threshold);
   }, [threshold]);
 
-  const width = 620, height = compact ? 190 : 255, left = 42, bottom = 34, top = 22, right = 18;
+  const width = compact ? 680 : 760;
+  const height = compact ? 330 : 430;
+  const left = 50, bottom = 44, top = 34, right = 24;
   const chartW = width - left - right, chartH = height - top - bottom;
   const count = ratios.length;
   if (!count) return <p className="muted">No PCA measurements available.</p>;
@@ -224,13 +226,13 @@ export function VarianceChart({
         {[0, .25, .5, .75, 1].map(v => (
           <g key={v}>
             <line x1={left} x2={width - right} y1={y(v)} y2={y(v)} className="chart-grid"/>
-            <text x={left - 9} y={y(v) + 3} textAnchor="end">{v * 100}%</text>
+            <text x={left - 10} y={y(v) + 4} textAnchor="end">{v * 100}%</text>
           </g>
         ))}
 
         {ratios.map((v, i) => {
           const isActive = i === activeIndex;
-          const barW = Math.max(1, chartW / count * .68);
+          const barW = Math.max(1.8, chartW / count * .72);
           return (
             <rect
               key={i}
@@ -246,45 +248,61 @@ export function VarianceChart({
         <polyline points={cumulative.map((v, i) => `${x(i)},${y(v)}`).join(' ')} className="variance-line"/>
         <line x1={left} x2={width - right} y1={y(currentThreshold)} y2={y(currentThreshold)} className="threshold-line"/>
 
-        <circle cx={x(selected)} cy={y(cumulative[selected])} r="4.5" className="variance-marker"/>
+        <circle cx={x(selected)} cy={y(cumulative[selected])} r="5" className="variance-marker"/>
         <text
-          x={Math.min(x(selected) + 9, width - 110)}
-          y={Math.max(y(cumulative[selected]) - 9, 14)}
+          x={Math.min(x(selected) + 10, width - 110)}
+          y={Math.max(y(cumulative[selected]) - 10, 16)}
           className="chart-annotation"
         >
           {selected + 1} PCs · {percent(currentThreshold, 0)}
         </text>
 
-        {(hoverIndex !== null || pinnedIndex !== null) && (
-          <g className="active-inspection-group">
-            <line x1={activeX} x2={activeX} y1={top} y2={top + chartH} className="variance-hover-line"/>
-            <circle cx={activeX} cy={activeY} r="5.5" className="variance-active-dot"/>
-            <g transform={`translate(${Math.min(Math.max(activeX - 65, left + 4), width - right - 135)}, ${Math.max(activeY - 32, top + 4)})`}>
-              <rect width="135" height="25" rx="4" className="variance-tooltip-bg"/>
-              <text x="8" y="16" className="variance-tooltip-text">
-                PC {String(activeIndex + 1).padStart(2, '0')}: {percent(activeRatio, 2)} · {percent(activeCum, 1)} Σ
-              </text>
+        {(hoverIndex !== null || pinnedIndex !== null) && (() => {
+          const tipW = 200;
+          const tipH = 56;
+          const tipX = Math.min(Math.max(activeX - tipW / 2, left + 4), width - right - tipW - 4);
+          const tipY = activeY < top + chartH * 0.45 ? activeY + 18 : activeY - tipH - 16;
+          return (
+            <g className="active-inspection-group">
+              <line x1={activeX} x2={activeX} y1={top} y2={top + chartH} className="variance-hover-line"/>
+              <circle cx={activeX} cy={activeY} r="8" className="variance-active-pulse"/>
+              <circle cx={activeX} cy={activeY} r="5.5" className="variance-active-dot"/>
+              <g transform={`translate(${tipX}, ${tipY})`} className="variance-tooltip-group">
+                <rect width={tipW} height={tipH} rx="8" className="variance-tooltip-card"/>
+                <text x="14" y="24" className="variance-tip-title">
+                  PC {String(activeIndex + 1).padStart(2, '0')} · {percent(activeRatio, 2)}
+                </text>
+                <text x="14" y="43" className="variance-tip-sub">
+                  {percent(activeCum, 1)} cumulative variance
+                </text>
+              </g>
             </g>
-          </g>
-        )}
+          );
+        })()}
 
         {[0, Math.floor(count / 4), Math.floor(count / 2), Math.floor(count * 3 / 4), count - 1]
           .filter((v, i, a) => a.indexOf(v) === i)
-          .map(i => <text key={i} x={x(i)} y={height - 12} textAnchor="middle">{i + 1}</text>)}
+          .map(i => <text key={i} x={x(i)} y={height - 14} textAnchor="middle">{i + 1}</text>)}
       </svg>
 
       <div className="variance-interactive-hud">
-        <span>
-          <strong>PC {String(activeIndex + 1).padStart(2, '0')}</strong>: explains{' '}
-          <code>{percent(activeRatio, 2)}</code> variance · Cumulative: <code>{percent(activeCum, 1)}</code>
-        </span>
-        <span className="hud-context">
+        <div className="hud-primary">
+          <span className="hud-badge">PC {String(activeIndex + 1).padStart(2, '0')}</span>
+          <span className="hud-val">
+            Explains <strong>{percent(activeRatio, 2)}</strong> individual variance
+          </span>
+          <span className="hud-sep">·</span>
+          <span className="hud-val">
+            Cumulative: <strong>{percent(activeCum, 1)}</strong>
+          </span>
+        </div>
+        <div className="hud-secondary">
           {activeIndex === selected ? (
-            <span className="threshold-tag">★ 95% Reference Cutoff ({selected + 1} PCs)</span>
+            <span className="threshold-tag">★ 95% Reference Threshold ({selected + 1} PCs)</span>
           ) : (
-            <span>{count - (activeIndex + 1)} dimensions pruned (-{percent(1 - (activeIndex + 1) / count, 0)})</span>
+            <span className="prune-tag">{count - (activeIndex + 1)} dimensions pruned (-{percent(1 - (activeIndex + 1) / count, 0)})</span>
           )}
-        </span>
+        </div>
       </div>
     </div>
   );

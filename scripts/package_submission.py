@@ -91,6 +91,7 @@ def main():
     required = [
         "README.md", "requirements.txt", "frontend/package.json", "PROJECT_LINKS.txt",
         "artifacts/study.json", "artifacts/model.joblib", "output/pdf/TerraLens_Project_Report.pdf",
+        "output/pdf/TerraLens_Study_Guide.pdf",
         "output/presentation/TerraLens_Presentation.pptx", "output/presentation/TerraLens_Presentation.pdf",
     ]
     found = {str(relative) for _, relative in files}

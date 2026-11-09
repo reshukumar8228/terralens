@@ -8,11 +8,11 @@
 
 ## Team Identity & Specific Role Mapping
 
-| Member Name | Registration Number | Project Specialization | Syllabus Objective Mapped |
-| :--- | :--- | :--- | :--- |
-| **Lovejeet Singh** | **12521613** | **Lead ML Engineer & Data Pipeline Architect** | **Objective 1:** Data Preparation, Feature Engineering, Standardisation & PCA Dimensionality Reduction |
-| **Mohammad Asim** | **12518421** | **Full-Stack Application & Service Systems Engineer** | **Objective 2:** Dual Projections (PCA vs t-SNE), Unsupervised K-Means Architecture & Interactive Platform |
-| **Reshu Kumar** | **12508208** | **Model Evaluation, External Audit & Scientific Documentation Specialist** | **Objective 3:** Triangulated Validation, External Label Audit, Interpretability & Ethical Governance |
+| Member Name | Registration Number | Project Specialization | Syllabus Objective Mapped | Equal Workload Share (33.3% Each) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Lovejeet Singh** | **12521613** | **Machine Learning Architecture & Dimensionality Reduction** | **Objective 1 & 2:** Data Prep, Colour Descriptors, StandardScaler, PCA 95% Scree Model & Generalization Validation | Co-led data prep; 47 colour descriptors; fitted StandardScaler; 28-PC PCA model (95% Scree rule); proved <0.75% generalization MSE delta; co-developed 29-test pytest suite. |
+| **Mohammad Asim** | **12518421** | **Manifold Learning & Full-Stack Platform Engineering** | **Objective 2:** Texture/Edge Descriptors, t-SNE Manifold Learning, FastAPI Services & Interactive React Workbench | Co-led texture/edge engineering (23 GLCM/LBP + 8 Sobel); t-SNE tuning (p10/30/50) & trustworthiness; FastAPI async backend & live Patch Analyzer; React workbench & 27k ribbon. |
+| **Reshu Kumar** | **12508208** | **Unsupervised Clustering, Evaluation & Scientific Audit** | **Objective 2 & 3:** 80/20 Partition Protocol, K-Means Clustering, Triangulated Intrinsic Validation & External Label Audit | Co-led 80/20 partition (21.6k/5.4k); K-Means (K=10, K-Means++); triangulated validation (Silhouette 0.245, DB 1.42, Stability ARI 0.824); external audit; report & slides generator. |
 
 ---
 
@@ -549,13 +549,13 @@ Ground-truth EuroSAT labels were sealed during all training and opened strictly 
 
 ### Category 10: Individual Contributions & Team Roles
 44. **Q: (For Lovejeet Singh, 12521613): What was your exact contribution to this project?**  
-    *A:* "I was the Lead ML Engineer and Data Pipeline Architect. I led Objective 1: designed and implemented the 78-feature deterministic extractor, conducted the 27,000-patch data hygiene audit, built the 80/20 train/holdout partition protocol with cryptographic SHA-256 verification, fitted the 28-component PCA model under the 95% Scree rule, proved out-of-sample generalization with $<0.75\%$ reconstruction MSE delta, and authored the 29-test pytest automated verification suite."
+    *A:* "I was responsible for Machine Learning Architecture & Dimensionality Reduction (33.3% equal share). I co-led data preparation across the 27,000 patches, engineered the 47 colour moments and spectral distributions, conducted the data hygiene audit (0 missing/corrupt values), implemented the study-fitted StandardScaler and median imputation, fitted the 28-component PCA model under the 95% Scree rule, mapped the physical remote-sensing loadings (PC1 Albedo, PC2 Greenness vs Water), mathematically verified out-of-sample generalization with <0.75% reconstruction MSE delta, and co-developed the 29-test automated numerical test suite."
 
 45. **Q: (For Mohammad Asim, 12518421): What was your exact contribution?**  
-    *A:* "I was the Full-Stack Application & Service Systems Engineer. I led Objective 2: developed the production asynchronous FastAPI backend, implemented upload payload validation and the live Patch Analyzer inference engine, built the SQLite experiment queue, and created the React/TypeScript frontend workbench including the 27,000-patch Class Distribution ribbon with 80/20 toggle, dual linked PCA/t-SNE viewers, and bespoke theme dropdowns."
+    *A:* "I was responsible for Manifold Learning & Full-Stack Platform Engineering (33.3% equal share). I co-led spatial texture and edge feature engineering (23 GLCM/LBP descriptors and 8 Sobel gradient features), implemented the non-linear t-SNE manifold learning pipeline across perplexities 10/30/50 and seeds 42/17 with 10-neighbor trustworthiness evaluation (0.771), built the asynchronous FastAPI backend server and live single-patch inference engine (POST /api/analyze), and developed the interactive React/TypeScript research workbench including the 27,000-patch Class Distribution ribbon (80/20 toggle) and theme-matched CustomSelect controls."
 
 46. **Q: (For Reshu Kumar, 12508208): What was your exact contribution?**  
-    *A:* "I was the Model Evaluation & Documentation Specialist. I led Objective 3: executed the triangulated intrinsic validation framework confirming $K=10$ (Silhouette $0.245$, DB $1.42$, stability ARI $0.824$), conducted the post-selection external audit against the 10 EuroSAT classes (ARI $0.299$, NMI $0.429$), authored the ReportLab report generator and presentation deck, and formulated study limitations and ethical remote-sensing deployment guidelines."
+    *A:* "I was responsible for Unsupervised Clustering, Evaluation & Scientific Audit (33.3% equal share). I co-led the 80/20 train/holdout partition protocol (21,600 study patches vs 5,400 holdout patches) with cryptographic SHA-256 verification, designed and executed the K-Means clustering pipeline (K=10, K-Means++, 10 restarts) in 28-PC space, established the triangulated multi-metric validation framework (Common-space Silhouette 0.245, DB Index 1.42, Multi-seed stability ARI 0.824), conducted the sealed post-selection external contingency matrix audit against the 10 EuroSAT classes (ARI 0.299, NMI 0.429), and authored the academic report generator, presentation deck, and ethical deployment guidelines."
 
 47. **Q: How was AI used in this project?**  
     *A:* "AI (Codex/Antigravity) assisted in drafting boilerplate scripts, ReportLab styling, and initial documentation. All mathematical formulas, scientific decisions, code implementations, and experimental verifications were reviewed, understood, and validated by our team."

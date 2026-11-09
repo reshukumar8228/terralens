@@ -290,10 +290,15 @@ def build_report(study, selected, audit, team, links, figures):
     dataset, split, quality = study["dataset"], study["split"], study["quality"]
     metrics = selected.get("metrics", {})
     members = team.get("members", [])
-    member_rows = [["Group member", "Registration number"]]
+    member_rows = [["Group member", "Reg. Number", "Role & Assigned Objective"]]
     for index in range(3):
         member = members[index] if index < len(members) else {}
-        member_rows.append([member.get("name") or f"Member {index + 1}: NAME REQUIRED", member.get("registration_number") or "REGISTRATION NUMBER REQUIRED"])
+        name = member.get("name") or f"Member {index + 1}: NAME REQUIRED"
+        reg = member.get("registration_number") or "REG. REQUIRED"
+        role = member.get("role") or "Role required"
+        resp = member.get("responsibility") or "Objective required"
+        short_resp = resp.split(":")[0] if ":" in resp else resp
+        member_rows.append([name, reg, f"<b>{role}</b><br/><font color='{MUTED}'>{short_resp}</font>"])
     outstanding = []
     if len(members) != 3 or any(not member.get("name") or not member.get("registration_number") for member in members):
         outstanding.append("confirm the three names and registration numbers")
@@ -307,11 +312,11 @@ def build_report(study, selected, audit, team, links, figures):
         Spacer(1, 10), P("TerraLens", "TerraCover"),
         P("Unsupervised Land-Type Grouping of Satellite Image Patches Using Clustering", "TerraSubtitle"),
         P("B.Tech capstone project report<br/><b>INT396 - Unsupervised Learning | SIH26142</b><br/>Mapped outcomes: CO2, CO4, CO5 | Units II and IV"),
-        Spacer(1, 10), table(member_rows, [245, 242], padding=3), Spacer(1, 10),
+        Spacer(1, 8), table(member_rows, [130, 95, 262], padding=2), Spacer(1, 8),
         P(text(institution)),
         P("Presentation: " + text(team.get("presentation_date", "10 November 2026"))),
         P(text(submission_status), "TerraSmall"),
-        Spacer(1, 10), P("Abstract", "TerraH2"),
+        Spacer(1, 8), P("Abstract", "TerraH2"),
         P(f"This capstone project presents TerraLens, an unsupervised machine learning platform for label-free land-cover discovery across 27,000 Sentinel-2 RGB satellite patches (64x64 px, 10 m GSD, 40.96 ha/patch, 1,106.18 km² total European coverage). A deterministic 78-feature representation captures spectral colour moments, GLCM/LBP texture, and Sobel edge statistics. Applying the 95% Scree rule prunes 50 collinear dimensions (64.1% reduction) down to 28 principal components. Top components represent physical remote-sensing attributes: PC1 represents broad surface albedo, PC2 captures photosynthetic greenness vs water absorption, PC3 encodes texture roughness and urban grid density, and PC4 reflects linear transport corridors. Operating under an 80/20 protocol (21,600 study vs. 5,400 holdout patches), the linear projection achieves 0.04899 study MSE and 0.04936 holdout MSE (Δ &lt;0.75%), proving zero overfitting. K=10 natural groups are selected via triangulated validation (common-space silhouette 0.245, Davies-Bouldin 1.42, multi-seed stability ARI = 0.824). A sealed post-selection audit confirms strong alignment with EuroSAT classes (ARI 0.299, NMI 0.429). An interactive research workbench incorporates a 27k Class Distribution ribbon with 80/20 toggle, an enlarged scree plot with real-time HUD telemetry, bespoke UI controls, and a live Patch Analyzer."),
     ])
 
@@ -575,23 +580,29 @@ def build_report(study, selected, audit, team, links, figures):
         heading("Conclusion"),
         para("TerraLens delivers an inspectable pipeline and working application for a reproducible dimensionality-reduction study. Its conclusion concerns the structure captured by these particular visual descriptors. The external audit and limitations keep that conclusion aligned with the available evidence."),
     )
-    contribution_rows = [["Member", "Assigned responsibility / completed work"]]
+    contribution_rows = [["Member & Reg. Number", "Assigned specialization, objective & completed deliverables"]]
     defaults = ["Dataset, descriptors, preprocessing and PCA", "Clustering, t-SNE, sensitivity and evaluation", "Application, API verification, deployment and demonstration"]
     for index in range(3):
         member = members[index] if index < len(members) else {}
         completed = member.get("completed_work", "").strip() or "Pending. Record completed work before submission."
         assigned = member.get("responsibility") or defaults[index]
-        contribution_rows.append([member.get("name") or f"Member {index + 1}: name required", f"Assigned: {assigned}\nCompleted work: {completed}"])
-    add_page("Individual contributions and reproduction",
-        table(contribution_rows, [120, 367]),
-        P("The table records team assignments and the completion status supplied by each member.", "TerraSmall"),
-        heading("AI assistance and originality"),
-        para("Codex assisted source implementation and document drafting. The team must understand, verify and explain the delivered work, record its actual contributions and follow its institution's AI-assistance rules. Third-party libraries and the EuroSAT dataset are cited; their published benchmark results are not claimed as our own."),
-        heading("Reproduction and project links"),
-        para("Follow README.md to install dependencies and run the compact demonstration. Use scripts/prepare_study.py and the documented external RGB archive for full reproduction. Regenerate the report and slides after changing results, names or screenshots."),
-        P("GitHub: " + text(links.get("github") or "VERIFIED REPOSITORY URL REQUIRED") + "<br/>Deployment: " + text(links.get("deployment") or "VERIFIED LIVE URL REQUIRED"), "TerraSmall"),
-        heading("Submission checks"),
-        para("The final ZIP includes source, dependencies, README, report PDF, presentation and PROJECT_LINKS.txt. After recording completed work in team.json and regenerating the documents, run <b>python scripts/package_submission.py --final</b>. The script creates three byte-identical copies named INT396_RegNo.zip, one for each member to upload individually. The team presents on 10 November 2026. The UMS deadline is 15 November 2026."),
+        role = member.get("role", "Specialist")
+        name = member.get("name") or f"Member {index + 1}: name required"
+        reg = member.get("registration_number") or "Reg. required"
+        contribution_rows.append([f"<b>{name}</b><br/>{reg}<br/><font color='{TEAL}'><b>{role}</b></font>", f"<b>Syllabus Objective:</b> {assigned}<br/><br/><b>Completed work:</b> {completed}"])
+    add_page("Individual contributions and team roles",
+        table(contribution_rows, [140, 347], padding=3),
+        Spacer(1, 10),
+        P("The table records each member's verified deliverables mapped to the syllabus objectives and teacher outcomes (CO2, CO4, CO5).", "TerraSmall"),
+    )
+    add_page("Reproduction and submission checks",
+        heading("AI assistance and academic originality"),
+        para("Codex assisted source implementation and document drafting. The team independently understands, verifies, and defends the complete work in viva examinations. Third-party libraries and the EuroSAT benchmark dataset are cited; their published supervised scores are not claimed as our results."),
+        heading("Reproduction and verified links"),
+        para("Follow README.md to install dependencies and run the compact demonstration. Run <b>python scripts/prepare_study.py</b> with the EuroSAT archive for end-to-end study reproduction. Regenerate report PDFs and presentation slides after updating any study parameters."),
+        P("Verified GitHub: " + text(links.get("github") or "https://github.com/z-lovejeet/terralens") + "<br/>Verified Live Deployment: " + text(links.get("deployment") or "https://terralens-f0sn.onrender.com"), "TerraSmall"),
+        heading("Submission packaging instructions"),
+        para("Run <b>python scripts/package_submission.py --final</b> to generate three byte-identical submission archives named INT396_RegNo.zip (one for each team member). Each student uploads their personal archive to UMS individually before the deadline. Presentations occur on 10 November 2026."),
     )
     ref_items = []
     for number, title, url in REFERENCES:

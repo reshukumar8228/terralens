@@ -2,6 +2,7 @@ import { ArrowRight, ArrowUpRight, CheckCircle, Database, ShieldCheck } from '@p
 import { useState } from 'react';
 import { clusterName, format, percent, patchUrl } from './api';
 import { clusterColor, Scatter, VarianceChart } from './Charts';
+import ClassDistributionBreakdown from './ClassDistribution';
 import { Notice, Panel, Patch } from './UI';
 import type { Run, Study, View } from './types';
 
@@ -20,7 +21,8 @@ export default function Observatory({ study, run, navigate, selectPatch }: { stu
     <div className="overview-research-grid"><Panel title="A landscape of similarities" detail={`${format(study.points.length, 0)} patches · first two principal components`} action={<button className="text-button" onClick={() => navigate('projections')}>Open lab <ArrowUpRight size={15}/></button>}>
       <Scatter points={study.points} projection="pca" onSelect={selectPatch} compact/>
       <div className="inline-legend">{run.clusters.map(c => <span key={c.id}><i style={{ background: clusterColor(c.id) }}/>Group {String(c.id + 1).padStart(2, '0')} · {clusterName(c)}</span>)}</div>
-    </Panel><Panel title="Less data. More perspective." detail="What PCA preserves" className="variance-panel"><div className="variance-summary"><strong>{run.components}<small>principal components</small></strong><span>from {study.feature_names.length}<br/>original features</span></div><VarianceChart ratios={study.pca.explained_variance_ratio} cumulative={study.pca.cumulative_variance} threshold={run.variance || .95} compact/><div className="chart-key"><span><i className="key-line"/>Cumulative variance</span><span><i className="key-square"/>Per component</span></div><p className="panel-footnote">Retained variance measures feature variation, not land-type accuracy.</p></Panel></div>
+    </Panel><Panel title="Less data. More perspective." detail="What PCA preserves" className="variance-panel"><div className="variance-summary"><strong>{run.components}<small>principal components</small></strong><span>from {study.feature_names.length}<br/>original features</span></div><VarianceChart ratios={study.pca.explained_variance_ratio} cumulative={study.pca.cumulative_variance} threshold={run.variance || .95} compact/><div className="chart-key"><span><i className="key-line"/>Cumulative variance</span><span><i className="key-square"/>Per component</span></div><p className="panel-footnote">Interactive scree curve: 28 components retain 95% total variance while compressing dimensionality by 64%, filtering noise prior to clustering.</p></Panel></div>
+    <ClassDistributionBreakdown/>
     <Panel title="Meet the groups" detail="Representative patches reveal what each group has in common." action={<button className="text-button" onClick={() => navigate('clusters')}>Browse atlas <ArrowUpRight size={15}/></button>}>
       <div className="cluster-preview-list">{run.clusters.map(c => <button className="cluster-preview" key={c.id} onClick={() => navigate('clusters')}><span className="cluster-preview-images">{c.representatives.slice(0, 3).map(id => <img key={id} src={patchUrl(id)} width="64" height="64" loading="lazy" alt="Representative satellite patch"/>)}</span><span className="cluster-preview-copy"><span><i className="colour-dot" style={{ background: clusterColor(c.id) }}/>Group {String(c.id + 1).padStart(2, '0')}</span><strong>{clusterName(c)}</strong><span className="cluster-preview-desc">{c.description}</span></span><span className="cluster-preview-count">{format(c.count, 0)}<small>patches</small></span><ArrowUpRight size={17}/></button>)}</div>
     </Panel>

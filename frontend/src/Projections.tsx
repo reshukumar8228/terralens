@@ -2,7 +2,7 @@ import { ArrowDown, CaretDown, CaretUp, DownloadSimple, GraduationCap, Info, Lig
 import { useMemo, useState } from 'react';
 import { clusterName, format, percent, titleCase } from './api';
 import { Scatter, VarianceChart } from './Charts';
-import { ClusterPills, Notice, PageTitle, Panel, Patch } from './UI';
+import { ClusterPills, CustomSelect, Notice, PageTitle, Panel, Patch } from './UI';
 import type { Run, Study } from './types';
 
 const COMPONENT_EXPLANATIONS: Record<number, { title: string; physicalMeaning: string; keyContrast: string }> = {
@@ -43,7 +43,7 @@ export default function Projections({ study, run, selectPatch }: { study: Study;
   const [filter, setFilter] = useState<number | null>(null);
   const [componentIndex, setComponentIndex] = useState(0);
   const [explain, setExplain] = useState(false);
-  const [openVivaCard, setOpenVivaCard] = useState<number | null>(0);
+  const [openCard, setOpenCard] = useState<number | null>(0);
 
   const tsne = study.tsne_runs.find(r => r.id === tsneId) || study.tsne_runs[0];
   const sample = useMemo(() => study.points.filter(p => filter == null || p.cluster === filter).slice(0, 10), [study.points, filter]);
@@ -122,13 +122,16 @@ export default function Projections({ study, run, selectPatch }: { study: Study;
         >
           <div className="tsne-controls">
             <label htmlFor="tsne-run">Recorded configuration</label>
-            <select id="tsne-run" value={tsne?.id || ''} onChange={e => setTsneId(e.target.value)}>
-              {study.tsne_runs.map(t => (
-                <option key={t.id} value={t.id}>
-                  Perplexity {t.perplexity} · seed {t.seed}
-                </option>
-              ))}
-            </select>
+            <CustomSelect
+              id="tsne-run"
+              ariaLabel="Recorded configuration"
+              value={tsne?.id || ''}
+              onChange={setTsneId}
+              options={study.tsne_runs.map(t => ({
+                value: t.id,
+                label: `Perplexity ${t.perplexity} · seed ${t.seed}`,
+              }))}
+            />
           </div>
           {tsne ? (
             <Scatter
@@ -197,17 +200,15 @@ export default function Projections({ study, run, selectPatch }: { study: Study;
           title="What shapes a component?"
           detail="Feature loadings describe axis orientation and physical remote-sensing factors."
           action={
-            <select
-              aria-label="Principal component loadings"
+            <CustomSelect
+              ariaLabel="Principal component loadings"
               value={componentIndex}
-              onChange={e => setComponentIndex(Number(e.target.value))}
-            >
-              {study.pca.loadings.map((l, i) => (
-                <option value={i} key={l.component}>
-                  PC {l.component + (l.component === 0 ? 1 : 0)} ({percent(study.pca.explained_variance_ratio[i], 1)})
-                </option>
-              ))}
-            </select>
+              onChange={setComponentIndex}
+              options={study.pca.loadings.map((l, i) => ({
+                value: i,
+                label: `PC ${l.component + (l.component === 0 ? 1 : 0)} (${percent(study.pca.explained_variance_ratio[i], 1)})`,
+              }))}
+            />
           }
         >
           {/* Plain English Physical Interpretation Banner */}
@@ -245,32 +246,32 @@ export default function Projections({ study, run, selectPatch }: { study: Study;
         </Panel>
       </div>
 
-      {/* Teacher Viva Defense Guide: Dual Projections */}
+      {/* Theoretical Framework: Dimensionality Reduction */}
       <Panel
-        title="Examiner's Guide: Dimensionality Reduction in Remote Sensing"
-        detail="Rigorous academic explanations to present during capstone viva defense"
+        title="Theoretical Framework: Dimensionality Reduction in Earth Observation"
+        detail="Comparative principles of linear (PCA) and non-linear (t-SNE) projections"
         className="viva-defense-panel"
-        action={<span className="method-chip viva-chip"><GraduationCap size={15}/> Viva Defense Prep</span>}
+        action={<span className="method-chip viva-chip"><GraduationCap size={15}/> Methodology Framework</span>}
       >
         <div className="viva-defense-accordion">
           {/* Card 1 */}
-          <div className={`viva-card ${openVivaCard === 0 ? 'is-expanded' : ''}`}>
+          <div className={`viva-card ${openCard === 0 ? 'is-expanded' : ''}`}>
             <button
               type="button"
               className="viva-card-header"
-              onClick={() => setOpenVivaCard(openVivaCard === 0 ? null : 0)}
-              aria-expanded={openVivaCard === 0}
+              onClick={() => setOpenCard(openCard === 0 ? null : 0)}
+              aria-expanded={openCard === 0}
             >
               <div className="viva-card-title">
                 <Scales size={18} className="viva-icon" />
-                <span>Q1: Why cluster in 28-dimensional PCA space instead of directly on 2D t-SNE?</span>
+                <span>Why Cluster in 28-Dimensional PCA Space Instead of 2D t-SNE?</span>
               </div>
-              {openVivaCard === 0 ? <CaretUp size={16} /> : <CaretDown size={16} />}
+              {openCard === 0 ? <CaretUp size={16} /> : <CaretDown size={16} />}
             </button>
-            {openVivaCard === 0 && (
+            {openCard === 0 && (
               <div className="viva-card-content">
                 <p>
-                  <strong>Academic Explanation:</strong> K-Means minimizes within-cluster sum of squared Euclidean distances (WCSS = &Sigma; ||x - &mu;||&sup2;). This mathematical formulation requires a <em>metric space</em> where Euclidean distances reflect true geometric separation.
+                  <strong>Theoretical Foundation:</strong> K-Means minimizes within-cluster sum of squared Euclidean distances (WCSS = &Sigma; ||x - &mu;||&sup2;). This mathematical formulation requires a <em>metric space</em> where Euclidean distances reflect true geometric separation.
                 </p>
                 <ul>
                   <li>
@@ -288,23 +289,23 @@ export default function Projections({ study, run, selectPatch }: { study: Study;
           </div>
 
           {/* Card 2 */}
-          <div className={`viva-card ${openVivaCard === 1 ? 'is-expanded' : ''}`}>
+          <div className={`viva-card ${openCard === 1 ? 'is-expanded' : ''}`}>
             <button
               type="button"
               className="viva-card-header"
-              onClick={() => setOpenVivaCard(openVivaCard === 1 ? null : 1)}
-              aria-expanded={openVivaCard === 1}
+              onClick={() => setOpenCard(openCard === 1 ? null : 1)}
+              aria-expanded={openCard === 1}
             >
               <div className="viva-card-title">
                 <Lightbulb size={18} className="viva-icon" />
-                <span>Q2: Why retain 95% cumulative variance (28 components) rather than all 78 features?</span>
+                <span>Why Retain 95% Cumulative Variance (28 Components)?</span>
               </div>
-              {openVivaCard === 1 ? <CaretUp size={16} /> : <CaretDown size={16} />}
+              {openCard === 1 ? <CaretUp size={16} /> : <CaretDown size={16} />}
             </button>
-            {openVivaCard === 1 && (
+            {openCard === 1 && (
               <div className="viva-card-content">
                 <p>
-                  <strong>Academic Explanation:</strong> Satellite feature extraction yields 78 dimensions comprising color histograms, percentiles, and Local Binary Patterns (LBP). Many adjacent histogram bins and texture channels share severe multicollinearity.
+                  <strong>Theoretical Foundation:</strong> Satellite feature extraction yields 78 dimensions comprising color histograms, percentiles, and Local Binary Patterns (LBP). Many adjacent histogram bins and texture channels share severe multicollinearity.
                 </p>
                 <ul>
                   <li>
@@ -322,23 +323,23 @@ export default function Projections({ study, run, selectPatch }: { study: Study;
           </div>
 
           {/* Card 3 */}
-          <div className={`viva-card ${openVivaCard === 2 ? 'is-expanded' : ''}`}>
+          <div className={`viva-card ${openCard === 2 ? 'is-expanded' : ''}`}>
             <button
               type="button"
               className="viva-card-header"
-              onClick={() => setOpenVivaCard(openVivaCard === 2 ? null : 2)}
-              aria-expanded={openVivaCard === 2}
+              onClick={() => setOpenCard(openCard === 2 ? null : 2)}
+              aria-expanded={openCard === 2}
             >
               <div className="viva-card-title">
                 <Info size={18} className="viva-icon" />
-                <span>Q3: How should an examiner interpret the dual PCA and t-SNE visualizations?</span>
+                <span>How to Interpret the Dual Global (PCA) and Local (t-SNE) Views</span>
               </div>
-              {openVivaCard === 2 ? <CaretUp size={16} /> : <CaretDown size={16} />}
+              {openCard === 2 ? <CaretUp size={16} /> : <CaretDown size={16} />}
             </button>
-            {openVivaCard === 2 && (
+            {openCard === 2 && (
               <div className="viva-card-content">
                 <p>
-                  <strong>Academic Explanation:</strong> The two projections provide complementary lenses on the exact same 21,600 patches:
+                  <strong>Theoretical Foundation:</strong> The two projections provide complementary lenses on the exact same 21,600 patches:
                 </p>
                 <ul>
                   <li>

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
@@ -84,8 +85,22 @@ def P(text_str: str, style="SG_Body") -> Paragraph:
     return Paragraph(text_str, STYLES[style])
 
 
+VALID_TAG_PATTERN = re.compile(r'</?(?:b|i|u|font|br|link|super|sub|code)(?:\s+[^>]*?)?/?>', re.IGNORECASE)
+
+
 def T(val: any) -> str:
-    return escape(str(val)).replace("\n", "<br/>")
+    if val is None:
+        return ""
+    s = str(val).replace("\n", "<br/>")
+    s = re.sub(r'&(?!(?:amp|lt|gt|quot|apos);)', '&amp;', s)
+    tokens = VALID_TAG_PATTERN.split(s)
+    tags = VALID_TAG_PATTERN.findall(s)
+    cleaned = []
+    for i, token in enumerate(tokens):
+        cleaned.append(token.replace("<", "&lt;").replace(">", "&gt;"))
+        if i < len(tags):
+            cleaned.append(tags[i])
+    return "".join(cleaned)
 
 
 def make_table(rows: list[list[any]], widths=None, padding=3.0) -> Table:

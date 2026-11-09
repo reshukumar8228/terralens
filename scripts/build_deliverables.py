@@ -10,6 +10,7 @@ import argparse
 import json
 import math
 from pathlib import Path
+import re
 from xml.sax.saxutils import escape
 
 import matplotlib
@@ -100,8 +101,22 @@ def P(text, style="TerraBody"):
     return Paragraph(text, STYLES[style])
 
 
+VALID_TAG_PATTERN = re.compile(r'</?(?:b|i|u|font|br|link|super|sub|code)(?:\s+[^>]*?)?/?>', re.IGNORECASE)
+
+
 def text(value):
-    return escape(str(value)).replace("\n", "<br/>")
+    if value is None:
+        return ""
+    s = str(value).replace("\n", "<br/>")
+    s = re.sub(r'&(?!(?:amp|lt|gt|quot|apos);)', '&amp;', s)
+    tokens = VALID_TAG_PATTERN.split(s)
+    tags = VALID_TAG_PATTERN.findall(s)
+    cleaned = []
+    for i, token in enumerate(tokens):
+        cleaned.append(token.replace("<", "&lt;").replace(">", "&gt;"))
+        if i < len(tags):
+            cleaned.append(tags[i])
+    return "".join(cleaned)
 
 
 def table(rows, widths=None, padding=4):

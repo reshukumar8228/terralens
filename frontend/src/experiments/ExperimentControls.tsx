@@ -1,6 +1,6 @@
 import { CheckCircle, Play } from '@phosphor-icons/react';
 import { format } from '../api';
-import { Notice, Panel } from '../UI';
+import { CustomSelect, Notice, Panel } from '../UI';
 import type { ExperimentConfig, LivePerplexity } from '../types';
 
 interface Props {
@@ -40,12 +40,17 @@ export default function ExperimentControls({ config, onChange, onSubmit, maximum
           </div>
           <div className="control-field">
             <label htmlFor="variance">PCA retained variance</label>
-            <select id="variance" value={config.variance}
-              onChange={event => onChange({ ...config, variance: Number(event.target.value) })}>
-              <option value="0.9">90% · greater compression</option>
-              <option value="0.95">95% · balanced retention</option>
-              <option value="0.99">99% · more dimensions</option>
-            </select>
+            <CustomSelect
+              id="variance"
+              ariaLabel="PCA retained variance"
+              value={config.variance}
+              onChange={v => onChange({ ...config, variance: Number(v) })}
+              options={[
+                { value: 0.9, label: '90% · greater compression' },
+                { value: 0.95, label: '95% · balanced retention' },
+                { value: 0.99, label: '99% · more dimensions' },
+              ]}
+            />
           </div>
           <div className="paired-controls">
             <div className="control-field">
@@ -55,33 +60,47 @@ export default function ExperimentControls({ config, onChange, onSubmit, maximum
             </div>
             <div className="control-field">
               <label htmlFor="sample-size">Sample size</label>
-              <select id="sample-size" value={config.sample_size}
-                onChange={event => onChange({ ...config, sample_size: Number(event.target.value) })}>
-                {sampleOptions.map(count => <option value={count} key={count}>{format(count, 0)} patches</option>)}
-              </select>
+              <CustomSelect
+                id="sample-size"
+                ariaLabel="Sample size"
+                value={config.sample_size}
+                onChange={s => onChange({ ...config, sample_size: Number(s) })}
+                options={sampleOptions.map(count => ({
+                  value: count,
+                  label: `${format(count, 0)} patches`,
+                }))}
+              />
             </div>
           </div>
           {tsneMaximum != null && (
             <div className="control-field">
               <label htmlFor="live-perplexity">Live t-SNE projection</label>
-              <select id="live-perplexity" value={config.tsne_perplexity ?? ''} aria-describedby="live-tsne-limit"
-                onChange={event => changePerplexity(event.target.value)}>
-                <option value="">Off · PCA and K-Means</option>
-                {[10, 30, 50].map(value => <option value={value} key={value}>Perplexity {value}</option>)}
-              </select>
-              <p id="live-tsne-limit" className="caption">
-                Live t-SNE uses up to {format(tsneMaximum, 0)} of the same patches. The points keep their K-Means groups.
-              </p>
+              <CustomSelect
+                id="live-perplexity"
+                ariaLabel="Live t-SNE projection"
+                value={config.tsne_perplexity ?? ''}
+                onChange={val => changePerplexity(String(val))}
+                options={[
+                  { value: '', label: 'Off · PCA and K-Means only' },
+                  { value: 10, label: 'Perplexity 10' },
+                  { value: 30, label: 'Perplexity 30' },
+                  { value: 50, label: 'Perplexity 50' },
+                ]}
+              />
+              <span className="field-hint" id="live-tsne-limit">Live t-SNE fits up to {format(tsneMaximum, 0)} patches on this host.</span>
             </div>
           )}
-          <button className="button button-primary run-button" type="submit">
-            {busy ? <><span className="loading-dots"/>Computing experiment</> : <><Play size={17} weight="fill"/>Run experiment</>}
+          <button type="submit" className="button button-primary" disabled={busy}>
+            {busy ? <span className="button-spinner" aria-hidden="true"/> : <Play size={17} weight="bold"/>}
+            <span>{busy ? 'Running experiment…' : 'Run experiment'}</span>
           </button>
         </fieldset>
       </form>
-      <p className="caption">The result is computed for these settings. Recorded study runs are available below.</p>
       {error && <Notice warning>{error}</Notice>}
-      <div className="experiment-capability"><CheckCircle size={16}/><span>Labels excluded from model fitting</span></div>
+      <ul className="experiment-assurances">
+        <li><CheckCircle size={15}/><span>The reference study remains unchanged.</span></li>
+        <li><CheckCircle size={15}/><span>Experiments run on the current host.</span></li>
+      </ul>
     </Panel>
   );
 }

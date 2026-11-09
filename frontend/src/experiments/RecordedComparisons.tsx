@@ -2,35 +2,35 @@ import { useState } from 'react';
 import { CaretDown, CaretUp, ChartBar, CheckCircle, DownloadSimple, GraduationCap, Lightbulb, Scales, ShieldCheck, Sparkle } from '@phosphor-icons/react';
 import { fixed, format, percent } from '../api';
 import { MetricLine } from '../Charts';
-import { MetricsRow, Panel } from '../UI';
+import { CustomSelect, MetricsRow, Panel } from '../UI';
 import type { Run, Study } from '../types';
 
 type MetricType = 'silhouette_original' | 'davies_bouldin' | 'calinski_harabasz' | 'inertia';
 
-const METRIC_DESCRIPTIONS: Record<MetricType, { label: string; direction: string; desc: string; teacherNote: string }> = {
+const METRIC_DESCRIPTIONS: Record<MetricType, { label: string; direction: string; desc: string; insightNote: string }> = {
   silhouette_original: {
     label: 'Common-space Silhouette',
     direction: 'Higher is better (s ∈ [-1, +1])',
     desc: 'Measures intra-cluster cohesion relative to nearest-cluster separation in the unified 78-feature space.',
-    teacherNote: 'Notice the steady plateau around K=10. Beyond K=10, the curve levels off, indicating that higher K splits natural clusters into redundant sub-fragments without meaningful gain.',
+    insightNote: 'Notice the steady plateau around K=10. Beyond K=10, the curve levels off, indicating that higher K splits natural clusters into redundant sub-fragments without meaningful gain.',
   },
   davies_bouldin: {
     label: 'Davies-Bouldin Index',
     direction: 'Lower is better (DB ≥ 0)',
     desc: 'Evaluates the ratio of within-cluster scatter to pairwise centroid separation.',
-    teacherNote: 'Lower values indicate tight, well-separated clusters. At K=10, the Davies-Bouldin index reaches an optimal local trough before rising due to over-fragmentation.',
+    insightNote: 'Lower values indicate tight, well-separated clusters. At K=10, the Davies-Bouldin index reaches an optimal local trough before rising due to over-fragmentation.',
   },
   calinski_harabasz: {
     label: 'Calinski-Harabasz Score',
     direction: 'Higher is better (Variance Ratio)',
     desc: 'Ratio of sum of between-cluster dispersion to within-cluster dispersion.',
-    teacherNote: 'Measures overall clustering compactness. Higher scores confirm that clusters are dense and distinctly separated in feature space.',
+    insightNote: 'Measures overall clustering compactness. Higher scores confirm that clusters are dense and distinctly separated in feature space.',
   },
   inertia: {
     label: 'Inertia / WCSS (Elbow Method)',
     direction: 'Lower is better (Within-cluster sum of squares)',
     desc: 'Sum of squared distances from each patch to its closest assigned cluster centroid.',
-    teacherNote: 'The classic Elbow heuristic: diminishing returns set in past K=8-10, demonstrating that 10 groups explain the vast majority of natural spatial variance.',
+    insightNote: 'The classic Elbow heuristic: diminishing returns set in past K=8-10, demonstrating that 10 groups explain the vast majority of natural spatial variance.',
   },
 };
 
@@ -38,7 +38,7 @@ export default function RecordedComparisons({ study, reference }: { study: Study
   const [variance, setVariance] = useState(reference.variance ?? 0.95);
   const [metricKey, setMetricKey] = useState<MetricType>('silhouette_original');
   const [highlightId, setHighlightId] = useState(reference.id);
-  const [openVivaCard, setOpenVivaCard] = useState<number | null>(0);
+  const [openCard, setOpenCard] = useState<number | null>(0);
 
   const candidates = (study.experiments.screening ?? study.runs).filter(run => run.variance === variance);
   const byK = new Map<number, { k: number; value: number | null }>();
@@ -62,15 +62,16 @@ export default function RecordedComparisons({ study, reference }: { study: Study
           detail={`Screening cohort · ${format(study.experiments.screening_sample_size, 0)} patches · multi-metric evaluation`}
           action={
             <div className="screening-controls">
-              <select
-                aria-label="PCA variance for screening chart"
+              <CustomSelect
+                ariaLabel="PCA variance for screening chart"
                 value={variance}
-                onChange={event => setVariance(Number(event.target.value))}
-              >
-                <option value="0.9">PCA 90% (21 PCs)</option>
-                <option value="0.95">PCA 95% (28 PCs · Ref)</option>
-                <option value="0.99">PCA 99% (40 PCs)</option>
-              </select>
+                onChange={setVariance}
+                options={[
+                  { value: 0.9, label: 'PCA 90% (21 PCs)' },
+                  { value: 0.95, label: 'PCA 95% (28 PCs · Ref)' },
+                  { value: 0.99, label: 'PCA 99% (40 PCs)' },
+                ]}
+              />
             </div>
           }
         >
@@ -102,7 +103,7 @@ export default function RecordedComparisons({ study, reference }: { study: Study
               <span>{activeMetricMeta.desc}</span>
             </div>
             <p className="explainer-viva">
-              <strong>Viva Insight:</strong> {activeMetricMeta.teacherNote}
+              <strong>Method Interpretation:</strong> {activeMetricMeta.insightNote}
             </p>
           </div>
         </Panel>
@@ -154,32 +155,32 @@ export default function RecordedComparisons({ study, reference }: { study: Study
         </Panel>
       </div>
 
-      {/* Capstone Unsupervised Validation Framework (Examiner's Viva Defense) */}
+      {/* Capstone Unsupervised Validation Framework */}
       <Panel
-        title="Examiner's Guide: Unsupervised Validation Framework"
-        detail="Standard capstone viva defense questions and mathematical justifications"
+        title="Theoretical Framework: Unsupervised Model Validation"
+        detail="Mathematical foundations, metric comparability, and validation principles"
         className="viva-defense-panel"
-        action={<span className="method-chip viva-chip"><GraduationCap size={15}/> Academic Defense Prep</span>}
+        action={<span className="method-chip viva-chip"><GraduationCap size={15}/> Validation Principles</span>}
       >
         <div className="viva-defense-accordion">
-          {/* Viva Card 1 */}
-          <div className={`viva-card ${openVivaCard === 0 ? 'is-expanded' : ''}`}>
+          {/* Card 1 */}
+          <div className={`viva-card ${openCard === 0 ? 'is-expanded' : ''}`}>
             <button
               type="button"
               className="viva-card-header"
-              onClick={() => setOpenVivaCard(openVivaCard === 0 ? null : 0)}
-              aria-expanded={openVivaCard === 0}
+              onClick={() => setOpenCard(openCard === 0 ? null : 0)}
+              aria-expanded={openCard === 0}
             >
               <div className="viva-card-title">
                 <Scales size={18} className="viva-icon" />
-                <span>Q1: Since this is unsupervised learning without training labels, how do you mathematically prove that K=10 is the best model?</span>
+                <span>Mathematical Validation of K=10 Without Training Labels</span>
               </div>
-              {openVivaCard === 0 ? <CaretUp size={16} /> : <CaretDown size={16} />}
+              {openCard === 0 ? <CaretUp size={16} /> : <CaretDown size={16} />}
             </button>
-            {openVivaCard === 0 && (
+            {openCard === 0 && (
               <div className="viva-card-content">
                 <p>
-                  <strong>Academic Explanation:</strong> In unsupervised learning, model selection cannot rely on test accuracy. Instead, we use a <strong>triangulated multi-objective intrinsic validation protocol</strong>:
+                  <strong>Theoretical Foundation:</strong> In unsupervised learning, model selection cannot rely on test accuracy. Instead, we use a <strong>triangulated multi-objective intrinsic validation protocol</strong>:
                 </p>
                 <ul>
                   <li>
@@ -196,24 +197,24 @@ export default function RecordedComparisons({ study, reference }: { study: Study
             )}
           </div>
 
-          {/* Viva Card 2 */}
-          <div className={`viva-card ${openVivaCard === 1 ? 'is-expanded' : ''}`}>
+          {/* Card 2 */}
+          <div className={`viva-card ${openCard === 1 ? 'is-expanded' : ''}`}>
             <button
               type="button"
               className="viva-card-header"
-              onClick={() => setOpenVivaCard(openVivaCard === 1 ? null : 1)}
-              aria-expanded={openVivaCard === 1}
+              onClick={() => setOpenCard(openCard === 1 ? null : 1)}
+              aria-expanded={openCard === 1}
             >
               <div className="viva-card-title">
                 <ShieldCheck size={18} className="viva-icon" />
-                <span>Q2: Why must silhouette scores be compared in the original standardised feature space?</span>
+                <span>Metric Space Invariance & Common-Space Evaluation</span>
               </div>
-              {openVivaCard === 1 ? <CaretUp size={16} /> : <CaretDown size={16} />}
+              {openCard === 1 ? <CaretUp size={16} /> : <CaretDown size={16} />}
             </button>
-            {openVivaCard === 1 && (
+            {openCard === 1 && (
               <div className="viva-card-content">
                 <p>
-                  <strong>Academic Explanation:</strong> This is a critical point of scientific integrity in dimensionality reduction research:
+                  <strong>Theoretical Foundation:</strong> This is a critical point of scientific integrity in dimensionality reduction research:
                 </p>
                 <ul>
                   <li>
@@ -227,24 +228,24 @@ export default function RecordedComparisons({ study, reference }: { study: Study
             )}
           </div>
 
-          {/* Viva Card 3 */}
-          <div className={`viva-card ${openVivaCard === 2 ? 'is-expanded' : ''}`}>
+          {/* Card 3 */}
+          <div className={`viva-card ${openCard === 2 ? 'is-expanded' : ''}`}>
             <button
               type="button"
               className="viva-card-header"
-              onClick={() => setOpenVivaCard(openVivaCard === 2 ? null : 2)}
-              aria-expanded={openVivaCard === 2}
+              onClick={() => setOpenCard(openCard === 2 ? null : 2)}
+              aria-expanded={openCard === 2}
             >
               <div className="viva-card-title">
                 <Lightbulb size={18} className="viva-icon" />
-                <span>Q3: How do you prove the unsupervised model did not overfit the training cohort?</span>
+                <span>80/20 Train-Holdout Generalization & Reconstruction Error</span>
               </div>
-              {openVivaCard === 2 ? <CaretUp size={16} /> : <CaretDown size={16} />}
+              {openCard === 2 ? <CaretUp size={16} /> : <CaretDown size={16} />}
             </button>
-            {openVivaCard === 2 && (
+            {openCard === 2 && (
               <div className="viva-card-content">
                 <p>
-                  <strong>Academic Explanation:</strong> We implemented an 80/20 train/holdout split protocol on 27,000 patches (21,600 study patches vs. 5,400 holdout patches):
+                  <strong>Theoretical Foundation:</strong> We implemented an 80/20 train/holdout split protocol on 27,000 patches (21,600 study patches vs. 5,400 holdout patches):
                 </p>
                 <ul>
                   <li>
@@ -258,24 +259,24 @@ export default function RecordedComparisons({ study, reference }: { study: Study
             )}
           </div>
 
-          {/* Viva Card 4 */}
-          <div className={`viva-card ${openVivaCard === 3 ? 'is-expanded' : ''}`}>
+          {/* Card 4 */}
+          <div className={`viva-card ${openCard === 3 ? 'is-expanded' : ''}`}>
             <button
               type="button"
               className="viva-card-header"
-              onClick={() => setOpenVivaCard(openVivaCard === 3 ? null : 3)}
-              aria-expanded={openVivaCard === 3}
+              onClick={() => setOpenCard(openCard === 3 ? null : 3)}
+              aria-expanded={openCard === 3}
             >
               <div className="viva-card-title">
                 <ChartBar size={18} className="viva-icon" />
-                <span>Q4: Why does PCA feature selection outperform raw feature clustering?</span>
+                <span>Curse of Dimensionality & Noise Filtering via PCA</span>
               </div>
-              {openVivaCard === 3 ? <CaretUp size={16} /> : <CaretDown size={16} />}
+              {openCard === 3 ? <CaretUp size={16} /> : <CaretDown size={16} />}
             </button>
-            {openVivaCard === 3 && (
+            {openCard === 3 && (
               <div className="viva-card-content">
                 <p>
-                  <strong>Academic Explanation:</strong> In our ablation studies, fitting K-Means directly on all 78 raw features resulted in:
+                  <strong>Theoretical Foundation:</strong> In our ablation studies, fitting K-Means directly on all 78 raw features resulted in:
                 </p>
                 <ul>
                   <li>

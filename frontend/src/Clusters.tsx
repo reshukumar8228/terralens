@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ArrowRight, CirclesThree, GridFour, ImageSquare } from '@phosphor-icons/react';
 import { clusterName, format, percent } from './api';
 import { clusterColor, Scatter } from './Charts';
-import { ClusterPills, FeatureProfile, MetricsRow, Notice, PageTitle, Panel, Patch } from './UI';
+import { ClusterPills, CustomSelect, FeatureProfile, MetricsRow, Notice, PageTitle, Panel, Patch } from './UI';
 import type { PatchContext, Run, Study } from './types';
 
 export default function Clusters({ study, run: referenceRun, selectPatch }: { study: Study; run: Run; selectPatch: (id: string, context?: PatchContext) => void }) {
@@ -15,7 +15,18 @@ export default function Clusters({ study, run: referenceRun, selectPatch }: { st
   const images = useMemo(() => !cluster ? [] : mode === 'representatives' ? cluster.representatives : mode === 'boundary' ? cluster.boundary_samples : isReference ? study.points.filter(p => p.cluster === cluster.id).slice(0, 48).map(p => p.id) : [...new Set([...cluster.representatives, ...cluster.boundary_samples])], [cluster, mode, study.points, isReference]);
   if (!cluster) return <Notice>No cluster profiles were saved in this study.</Notice>;
   return <>
-    <PageTitle title="Cluster atlas" text="Look closely at the patches behind the numbers."><select aria-label="Atlas model configuration" value={run.id} onChange={e => { setRunId(e.target.value); setClusterId(0); setMode('representatives'); }}>{study.runs.filter(r => r.clusters?.length).map(r => <option key={r.id} value={r.id}>{r.id === referenceRun.id ? 'Reference' : r.k === 10 ? 'Granularity contrast' : 'Representation comparison'} · K {r.k} · {r.variance == null ? 'No PCA' : `PCA ${percent(r.variance, 0)}`}</option>)}</select><span className="tag"><CirclesThree size={16}/>{run.k} discovered groups</span></PageTitle>
+    <PageTitle title="Cluster atlas" text="Look closely at the patches behind the numbers.">
+      <CustomSelect
+        ariaLabel="Atlas model configuration"
+        value={run.id}
+        onChange={val => { setRunId(String(val)); setClusterId(0); setMode('representatives'); }}
+        options={study.runs.filter(r => r.clusters?.length).map(r => ({
+          value: r.id,
+          label: `${r.id === referenceRun.id ? 'Reference' : r.k === 10 ? 'Granularity contrast' : 'Representation comparison'} · K ${r.k} · ${r.variance == null ? 'No PCA' : `PCA ${percent(r.variance, 0)}`}`,
+        }))}
+      />
+      <span className="tag"><CirclesThree size={16}/>{run.k} discovered groups</span>
+    </PageTitle>
     {!isReference ? <Notice>This saved comparison uses {run.k} groups. It explores a different granularity or representation; it was not selected as the reference model. Cluster IDs belong to this configuration.</Notice> : null}
     <ClusterPills clusters={run.clusters} selected={clusterId} onSelect={setClusterId} all={false}/>
     <div className="cluster-detail-heading"><div className="cluster-identity"><span className="cluster-number" style={{ color: clusterColor(cluster.id) }}>{String(cluster.id + 1).padStart(2, '0')}</span><div><span className="workspace-label">Discovered group · Group {String(cluster.id + 1).padStart(2, '0')}</span><h2>{clusterName(cluster)}</h2><p className="cluster-descriptor"><strong>Visual profile:</strong> {cluster.description}</p><p className="caption">A feature-based interpretation, independent of reference land-type labels.</p></div></div><div className="cluster-fraction"><strong>{format(cluster.count, 0)}</strong><span>{percent(cluster.count / study.split.study_count)} of study patches</span></div></div>

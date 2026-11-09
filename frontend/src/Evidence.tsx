@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowRight, ArrowUpRight, BookOpen, CheckCircle, DownloadSimple, FileText, LockKey, ShieldCheck } from '@phosphor-icons/react';
 import { clusterName, format, percent, request, titleCase } from './api';
-import { Notice, PageTitle, Panel } from './UI';
+import { CustomSelect, Notice, PageTitle, Panel } from './UI';
 import type { Json, Run, Study } from './types';
 
 interface Audit {
@@ -36,7 +36,24 @@ function StudyResults({ study }: { study: Study }) {
   const experiments = study.experiments;
   const screening = (experiments.screening || []).filter(r => representation === 'all' || String(r.variance) === representation);
   return <>
-    <Panel title="Clustering sensitivity" detail={`K = 2–15 on the same ${format(experiments.screening_sample_size, 0)}-patch screening cohort.`} action={<select aria-label="Screening feature representation" value={representation} onChange={e => setRepresentation(e.target.value)}><option value="null">Without PCA</option><option value="0.9">PCA 90%</option><option value="0.95">PCA 95%</option><option value="0.99">PCA 99%</option><option value="all">All representations</option></select>}>
+    <Panel
+      title="Clustering sensitivity"
+      detail={`K = 2–15 on the same ${format(experiments.screening_sample_size, 0)}-patch screening cohort.`}
+      action={
+        <CustomSelect
+          ariaLabel="Screening feature representation"
+          value={representation}
+          onChange={val => setRepresentation(String(val))}
+          options={[
+            { value: 'null', label: 'Without PCA' },
+            { value: '0.9', label: 'PCA 90%' },
+            { value: '0.95', label: 'PCA 95%' },
+            { value: '0.99', label: 'PCA 99%' },
+            { value: 'all', label: 'All representations' },
+          ]}
+        />
+      }
+    >
       <div className="table-wrap"><table className="research-table"><thead><tr><th>Representation</th><th>K</th><th>Dimensions</th><th>Silhouette</th><th>Common-space silhouette</th><th>DB index</th></tr></thead><tbody>{screening.map(r => <tr key={`${r.variance}-${r.k}`}><td data-label="Representation">{r.variance == null ? 'Without PCA' : `PCA ${percent(r.variance, 0)}`}</td><td data-label="K">{r.k}</td><td data-label="Dimensions">{r.components}</td><td data-label="Silhouette">{format(r.metrics.silhouette)}</td><td data-label="Common-space silhouette">{format(r.metrics.silhouette_original)}</td><td data-label="DB index">{format(r.metrics.davies_bouldin)}</td></tr>)}</tbody></table></div>
       <p className="panel-footnote">Common-space silhouette always uses the same full, standardised feature representation. Other geometric scores describe each run's own feature space.</p>
     </Panel>
